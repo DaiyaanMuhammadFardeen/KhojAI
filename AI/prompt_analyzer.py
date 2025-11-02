@@ -154,11 +154,20 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
     if debug:
         print(Fore.MAGENTA + f"Total analysis: {total_time:.2f} ms" + Style.RESET_ALL)
 
+    # return {
+    #     "intents": intents or "No intent found",
+    #     "keywords": sorted(keywords, key=lambda x: x["score"]),
+    #     "goals": goals
+    # }
+
+
     return {
-        "intents": intents or "No intent found",
-        "keywords": sorted(keywords, key=lambda x: x["score"]),
-        "goals": goals
+    "message": f"**Intent:** {intents or 'No intent found'}\n"
+            f"**Keywords:** {', '.join([k['term'] for k in sorted(keywords, key=lambda x: x['score'], reverse=True)])}\n"
+            f"**Goals:** {', '.join(map(str, goals)) if goals else 'None'}"
     }
+
+
 
 
 # ------------------------------------------------------------------

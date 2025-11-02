@@ -1,0 +1,283 @@
+@import '../variables.scss';
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: $z-modal;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  background-color: $color-background;
+  border-radius: $radius-lg;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
+
+  .dark & {
+    background-color: $color-background-dark;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  }
+
+  @media (max-width: 768px) {
+    width: 95%;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-lg;
+  border-bottom: 1px solid $color-border;
+
+  .dark & {
+    border-bottom-color: $color-border-dark;
+  }
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  color: $color-text-primary;
+  margin: 0;
+
+  .dark & {
+    color: $color-text-primary-dark;
+  }
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: $color-text-secondary;
+  cursor: pointer;
+  padding: $spacing-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color $transition-fast;
+
+  .dark & {
+    color: $color-text-secondary-dark;
+  }
+
+  &:hover {
+    color: $color-text-primary;
+
+    .dark & {
+      color: $color-text-primary-dark;
+    }
+  }
+}
+
+.content {
+  padding: $spacing-lg;
+}
+
+.section {
+  margin-bottom: $spacing-xl;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-md;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  .dark & {
+    color: $color-text-primary-dark;
+  }
+}
+
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.settingLabel {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  color: $color-text-primary;
+
+  .dark & {
+    color: $color-text-primary-dark;
+  }
+}
+
+.toggle {
+  width: 48px;
+  height: 28px;
+  background-color: $color-border;
+  border: none;
+  border-radius: $radius-full;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2px;
+  transition: all $transition-fast;
+  color: white;
+
+  .dark & {
+    background-color: $color-border-dark;
+  }
+
+  &.active {
+    background-color: $color-primary;
+    justify-content: flex-end;
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+
+  .dark & {
+    color: $color-text-primary-dark;
+  }
+}
+
+.input {
+  width: 100%;
+  padding: $spacing-md;
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  font-size: 14px;
+  color: $color-text-primary;
+  transition: all $transition-fast;
+
+  .dark & {
+    background-color: $color-surface-dark;
+    border-color: $color-border-dark;
+    color: $color-text-primary-dark;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+    box-shadow: 0 0 0 2px rgba($color-primary, 0.1);
+  }
+
+  &::placeholder {
+    color: $color-text-secondary;
+
+    .dark & {
+      color: $color-text-secondary-dark;
+    }
+  }
+}
+
+.aboutText {
+  font-size: 14px;
+  color: $color-text-secondary;
+  margin: 0;
+
+  .dark & {
+    color: $color-text-secondary-dark;
+  }
+}
+
+.footer {
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  border-top: 1px solid $color-border;
+  justify-content: flex-end;
+
+  .dark & {
+    border-top-color: $color-border-dark;
+  }
+}
+
+.cancelBtn,
+.saveBtn {
+  padding: $spacing-md $spacing-lg;
+  border-radius: $radius-md;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all $transition-fast;
+  border: none;
+}
+
+.cancelBtn {
+  background-color: $color-surface;
+  color: $color-text-primary;
+  border: 1px solid $color-border;
+
+  .dark & {
+    background-color: $color-surface-dark;
+    border-color: $color-border-dark;
+    color: $color-text-primary-dark;
+  }
+
+  &:hover {
+    background-color: $color-background-secondary;
+
+    .dark & {
+      background-color: $color-background-secondary-dark;
+    }
+  }
+}
+
+.saveBtn {
+  background-color: $color-primary;
+  color: white;
+
+  &:hover {
+    background-color: $color-primary-dark;
+  }
+}

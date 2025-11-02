@@ -1,0 +1,226 @@
+@import '../variables.scss';
+
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background-color: $color-background-secondary;
+  border-right: 1px solid $color-border;
+  display: flex;
+  flex-direction: column;
+  transition: all $transition-base;
+  position: relative;
+  z-index: $z-sidebar;
+
+  .dark & {
+    background-color: $color-background-secondary-dark;
+    border-right-color: $color-border-dark;
+  }
+
+  @media (max-width: 768px) {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+    transition: transform $transition-base;
+
+    &.open {
+      transform: translateX(0);
+    }
+  }
+}
+
+.header {
+  padding: $spacing-lg;
+  border-bottom: 1px solid $color-border;
+
+  .dark & {
+    border-bottom-color: $color-border-dark;
+  }
+}
+
+.newChatBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  color: $color-text-primary;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all $transition-fast;
+
+  .dark & {
+    background-color: $color-surface-dark;
+    border-color: $color-border-dark;
+    color: $color-text-primary-dark;
+  }
+
+  &:hover {
+    background-color: $color-background;
+    border-color: $color-primary;
+
+    .dark & {
+      background-color: $color-background-dark;
+    }
+  }
+}
+
+.chatList {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-lg 0;
+}
+
+.section {
+  padding: 0 $spacing-md $spacing-lg;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 $spacing-md $spacing-md;
+  padding: 0;
+
+  .dark & {
+    color: $color-text-secondary-dark;
+  }
+}
+
+.chatItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-sm;
+  background-color: transparent;
+  border-radius: $radius-md;
+  color: $color-text-primary;
+  cursor: pointer;
+  transition: all $transition-fast;
+  position: relative;
+
+  .dark & {
+    color: $color-text-primary-dark;
+  }
+
+  &:hover {
+    background-color: $color-surface;
+
+    .dark & {
+      background-color: $color-surface-dark;
+    }
+  }
+
+  svg {
+    flex-shrink: 0;
+    color: $color-text-secondary;
+
+    .dark & {
+      color: $color-text-secondary-dark;
+    }
+  }
+}
+
+.chatTitle {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  color: $color-text-secondary;
+  cursor: pointer;
+  padding: $spacing-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color $transition-fast;
+
+  .dark & {
+    color: $color-text-secondary-dark;
+  }
+
+  &:hover {
+    color: #ef4444;
+  }
+}
+
+.footer {
+  padding: $spacing-lg;
+  border-top: 1px solid $color-border;
+
+  .dark & {
+    border-top-color: $color-border-dark;
+  }
+}
+
+.settingsBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background-color: transparent;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  color: $color-text-primary;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all $transition-fast;
+
+  .dark & {
+    border-color: $color-border-dark;
+    color: $color-text-primary-dark;
+  }
+
+  &:hover {
+    background-color: $color-surface;
+    border-color: $color-primary;
+
+    .dark & {
+      background-color: $color-surface-dark;
+    }
+  }
+}
+
+.toggleBtn {
+  display: none;
+  position: fixed;
+  bottom: $spacing-lg;
+  left: $spacing-lg;
+  width: 48px;
+  height: 48px;
+  background-color: $color-primary;
+  border: none;
+  border-radius: $radius-md;
+  color: white;
+  cursor: pointer;
+  z-index: $z-sidebar - 1;
+  transition: all $transition-fast;
+
+  .dark & {
+    background-color: $color-primary;
+  }
+
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}

@@ -1,0 +1,43 @@
+---- -------------------------------------------------
+---- 1. Enable UUID extension (used by Hibernate)
+---- -------------------------------------------------
+--CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+--
+---- -------------------------------------------------
+---- 2. Users
+---- -------------------------------------------------
+--CREATE TABLE IF NOT EXISTS app_user (
+--    id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+--    username   VARCHAR(50)  NOT NULL UNIQUE,
+--    password   VARCHAR(255) NOT NULL,
+--    email      VARCHAR(100) NOT NULL,
+--    created_at TIMESTAMPTZ  DEFAULT now()
+--);
+--
+---- -------------------------------------------------
+---- 3. Conversations
+---- -------------------------------------------------
+--CREATE TABLE IF NOT EXISTS conversation (
+--    id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+--    user_id    UUID NOT NULL REFERENCES app_user(id) ON DELETE CASCADE,
+--    title      TEXT NOT NULL,
+--    created_at TIMESTAMPTZ DEFAULT now(),
+--    updated_at TIMESTAMPTZ DEFAULT now()
+--);
+--
+---- -------------------------------------------------
+---- 4. Messages
+---- -------------------------------------------------
+--CREATE TABLE IF NOT EXISTS message (
+--    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+--    conversation_id UUID NOT NULL REFERENCES conversation(id) ON DELETE CASCADE,
+--    role            VARCHAR(20) NOT NULL CHECK (role IN ('USER','AI')),
+--    content         TEXT NOT NULL,
+--    sent_at         TIMESTAMPTZ DEFAULT now()
+--);
+--
+---- -------------------------------------------------
+---- 5. Indexes for fast lookup
+---- -------------------------------------------------
+--CREATE INDEX IF NOT EXISTS idx_conversation_user   ON conversation(user_id);
+--CREATE INDEX IF NOT EXISTS idx_message_conversation ON message(conversation_id, sent_at DESC);

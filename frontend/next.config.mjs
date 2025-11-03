@@ -6,6 +6,10 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  allowedDevOrigins: [
+    'nationally-award-ver-syndication.trycloudflare.com',
+    'localhost'
+  ],
 }
 
 export default nextConfig

@@ -6,6 +6,8 @@ import axios, { AxiosResponse } from 'axios';
 // -----------------------------------------------------------------------------
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
+console.log('API Base URL being used:', API_BASE);
+
 // -----------------------------------------------------------------------------
 // DTOs – mirror the Java records / DTOs on the backend
 // -----------------------------------------------------------------------------
@@ -57,8 +59,36 @@ export interface CreateMessageRequest {
 // -----------------------------------------------------------------------------
 const api = axios.create({
   baseURL: API_BASE,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true, // This is important for CORS
 });
+
+// Add a response interceptor to handle errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle CORS and network errors
+    if (!error.response) {
+      console.error('Network error or CORS issue:', error.message);
+      console.error('Error details:', error.toJSON ? error.toJSON() : error);
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Add a request interceptor to log requests
+api.interceptors.request.use(
+  (config) => {
+    console.log('Making request to:', config.baseURL + config.url);
+    return config;
+  },
+  (error) => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
 
 /** Optional: add JWT to every request */
 export const setAuthToken = (token: string | null) => {
@@ -74,8 +104,16 @@ export const setAuthToken = (token: string | null) => {
 // -----------------------------------------------------------------------------
 export const UserAPI = {
   /** POST /api/v1/users */
-  create: (data: CreateUserRequest): Promise<AxiosResponse<UserDTO>> =>
-    api.post<UserDTO>('/api/v1/users', data),
+  create: async (data: CreateUserRequest): Promise<AxiosResponse<UserDTO>> => {
+    try {
+      console.log('Sending user creation request to:', API_BASE + '/api/v1/users');
+      const response = await api.post<UserDTO>('/api/v1/users', data);
+      return response;
+    } catch (error) {
+      console.error('Error in UserAPI.create:', error);
+      throw error;
+    }
+  },
 
   /** GET /api/v1/users/{id} */
   get: (id: string): Promise<AxiosResponse<UserDTO>> =>
@@ -102,6 +140,10 @@ export const ConversationAPI = {
   get: (id: string): Promise<AxiosResponse<ConversationDTO>> =>
     api.get<ConversationDTO>(`/api/v1/conversations/${id}`),
 
+  /** GET /api/v1/conversations/user/{userId} */
+  getByUser: (userId: string): Promise<AxiosResponse<ConversationDTO[]>> =>
+    api.get<ConversationDTO[]>(`/api/v1/conversations/user/${userId}`),
+
   /** PUT /api/v1/conversations/{id}/title */
   updateTitle: (
     id: string,
@@ -119,8 +161,8 @@ export const ConversationAPI = {
 // -----------------------------------------------------------------------------
 export const MessageAPI = {
   /** POST /api/v1/messages */
-  create: (data: CreateMessageRequest): Promise<AxiosResponse<MessageDTO>> =>
-    api.post<MessageDTO>('/api/v1/messages', data),
+  create: (data: CreateMessageRequest): Promise<AxiosResponse<ConversationDTO>> =>
+    api.post<ConversationDTO>('/api/v1/messages', data),
 
   /** PUT /api/v1/messages/{id} */
   update: (
@@ -132,24 +174,4 @@ export const MessageAPI = {
   /** DELETE /api/v1/messages/{id} */
   delete: (id: string): Promise<AxiosResponse<void>> =>
     api.delete<void>(`/api/v1/messages/${id}`),
-};
-
-// -----------------------------------------------------------------------------
-// LEGACY ENDPOINTS (if you still expose the old ChatController)
-// -----------------------------------------------------------------------------
-export const LegacyChatAPI = {
-  /** POST /api/chat/conversation */
-  startConversation: (
-    userId: string,
-    title: string
-  ): Promise<AxiosResponse<any>> =>
-    api.post('/api/chat/conversation', { userId, title }),
-
-  /** POST /api/chat/message */
-  sendMessage: (
-    convId: string,
-    role: 'USER' | 'AI',
-    content: string
-  ): Promise<AxiosResponse<any>> =>
-    api.post('/api/chat/message', { convId, role, content }),
 };

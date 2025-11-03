@@ -30,6 +30,16 @@ public class ConversationController {
         return ResponseEntity.ok(toDTO(convService.findById(id)));
     }
 
+    // New endpoint to get all conversations for a user
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<ConversationDTO>> getByUser(@PathVariable UUID userId) {
+        List<Conversation> conversations = convService.findByUserId(userId);
+        List<ConversationDTO> conversationDTOs = conversations.stream()
+                .map(this::toDTO)
+                .toList();
+        return ResponseEntity.ok(conversationDTOs);
+    }
+
     @PutMapping("/{id}/title")
     public ResponseEntity<ConversationDTO> updateTitle(@PathVariable UUID id, @RequestBody Map<String, String> body) {
         Conversation conv = convService.updateTitle(id, body.get("title"));

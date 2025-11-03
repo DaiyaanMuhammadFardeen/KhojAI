@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -28,6 +29,12 @@ public class ConversationService {
 
     public Conversation findById(UUID id) {
         return repo.findById(id).orElseThrow(() -> new EntityNotFoundException("Conversation not found"));
+    }
+
+    // New method to find conversations by user ID
+    public List<Conversation> findByUserId(UUID userId) {
+        User user = userRepo.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
+        return user.getConversations();
     }
 
     public Conversation updateTitle(UUID id, String title) {

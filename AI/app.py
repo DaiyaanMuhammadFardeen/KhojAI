@@ -1,14 +1,20 @@
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uvicorn
 from prompt_analyzer import analyze_prompt
 
-app = Flask(__name__)
+app = FastAPI(title="AI Prompt Analyzer", version="1.0.0")
 
-@app.route("/analyze", methods=["POST"])
-def analyze():
-    payload = request.get_json(force=True)
-    result = analyze_prompt(payload.get("prompt", ""), debug=False)
-    return jsonify(result)
+class PromptRequest(BaseModel):
+    prompt: str
+
+@app.post("/analyze")
+async def analyze(request: PromptRequest):
+    try:
+        result = analyze_prompt(request.prompt, debug=False)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8000, debug=True)
-
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")

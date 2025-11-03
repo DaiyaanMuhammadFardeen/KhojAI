@@ -4,12 +4,20 @@ import { useState, useRef, useEffect } from "react"
 import ChatMessage from "./chat-message"
 import PromptBar from "./prompt-bar"
 import { Menu } from "lucide-react"
+import { ConversationAPI, MessageAPI } from '@/app/api/chat/route'
 
 interface Message {
   id: string
-  role: "user" | "assistant"
+  role: "USER" | "AI"
   content: string
-  timestamp: Date
+  sentAt: string
+}
+
+interface Conversation {
+  id: string
+  title: string
+  createdAt: string
+  messages: Message[]
 }
 
 interface ChatInterfaceProps {
@@ -18,23 +26,7 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({ onMenuClick, chatId }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: `# Welcome to ChatBot
-
-I'm your AI assistant. I can help you with:
-- **Answering questions** on a wide range of topics
-- **Writing and editing** content
-- **Coding assistance** and debugging
-- **Creative brainstorming** and ideation
-- **Learning and explanations** of complex concepts
-
-Feel free to ask me anything! Start by typing your question or prompt below.`,
-      timestamp: new Date(),
-    },
-  ])
+  const [conversation, setConversation] = useState<Conversation | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -44,52 +36,114 @@ Feel free to ask me anything! Start by typing your question or prompt below.`,
 
   useEffect(() => {
     scrollToBottom()
-  }, [messages])
+  }, [conversation?.messages])
+
+  // Load conversation when chatId changes
+  useEffect(() => {
+    const loadConversation = async () => {
+      if (!chatId) {
+        // No chatId means we start with no conversation
+        setConversation(null)
+        return;
+      } else {
+        // Load existing conversation
+        try {
+          const response = await ConversationAPI.get(chatId)
+          setConversation(response.data)
+        } catch (error) {
+          console.error("Error loading conversation:", error)
+        }
+      }
+    }
+
+    loadConversation()
+  }, [chatId])
+
+  // Update conversation title based on first message
+  useEffect(() => {
+    const updateConversationTitle = async () => {
+      if (!conversation || conversation.messages.length === 0) return
+
+      // If this is still titled "New Chat" and we have messages, update the title
+      if (conversation.title === "New Chat" && conversation.messages.length > 0) {
+        const firstUserMessage = conversation.messages.find(msg => msg.role === "USER")
+        if (firstUserMessage) {
+          // Get first 5 words of the first message
+          const words = firstUserMessage.content.split(' ').slice(0, 5)
+          const newTitle = words.join(' ')
+          
+          try {
+            const response = await ConversationAPI.updateTitle(conversation.id, newTitle)
+            setConversation(response.data)
+          } catch (error) {
+            console.error("Error updating conversation title:", error)
+          }
+        }
+      }
+    }
+
+    updateConversationTitle()
+  }, [conversation?.messages.length, conversation?.id, conversation?.title])
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content,
-      timestamp: new Date(),
-    }
-
-    setMessages((prev) => [...prev, userMessage])
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: content }),
+      // If no conversation exists, create one
+      let currentConversation = conversation;
+      if (!currentConversation) {
+        const userId = localStorage.getItem('userId')
+        if (!userId) {
+          console.error("No user ID found")
+          setIsLoading(false)
+          return
+        }
+
+        // Create new conversation with the first 5 words of the message as title
+        const words = content.split(' ').slice(0, 5)
+        const title = words.join(' ')
+        
+        const convResponse = await ConversationAPI.create({
+          userId: userId,
+          title: title || "New Chat"
+        })
+
+        currentConversation = convResponse.data
+        setConversation(currentConversation)
+        
+        // Dispatch a custom event to notify the sidebar about the new conversation
+        window.dispatchEvent(new CustomEvent('conversationCreated', { detail: currentConversation.id }))
+      }
+
+      // Send message to the conversation
+      const response = await MessageAPI.create({
+        convId: currentConversation.id,
+        role: "USER",
+        content: content
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to get response")
-      }
-
-      const data = await response.json()
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.response,
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, assistantMessage])
+      // Update the conversation with the full response
+      setConversation(response.data)
     } catch (error) {
       console.error("Error sending message:", error)
+      
+      // Add error message to the conversation
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
+        id: Date.now().toString(),
+        role: "AI",
         content: "Sorry, I encountered an error processing your request. Please try again.",
-        timestamp: new Date(),
+        sentAt: new Date().toISOString()
       }
-      setMessages((prev) => [...prev, errorMessage])
+      
+      setConversation(prev => {
+        if (!prev) return null
+        return {
+          ...prev,
+          messages: [...prev.messages, errorMessage]
+        }
+      })
     } finally {
       setIsLoading(false)
     }
@@ -99,18 +153,29 @@ Feel free to ask me anything! Start by typing your question or prompt below.`,
     <div className="flex-1 flex flex-col h-screen bg-white dark:bg-slate-950 transition-colors duration-200">
       <div className="flex items-center justify-between px-6 py-4 md:px-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950">
         <button
-          className="hidden md:flex items-center justify-center text-slate-900 dark:text-slate-100 cursor-pointer p-2 hover:text-green-600 transition-colors"
+          className="flex md:hidden items-center justify-center text-slate-900 dark:text-slate-100 cursor-pointer p-2 hover:text-green-600 transition-colors"
           onClick={onMenuClick}
         >
           <Menu size={24} />
         </button>
-        <h1 className="text-lg md:text-base font-semibold text-slate-900 dark:text-slate-100">ChatBot</h1>
+        <div className="hidden md:flex w-10"></div>
+        <h1 className="text-lg md:text-base font-semibold text-slate-900 dark:text-slate-100">
+          {conversation?.title || "ChatBot"}
+        </h1>
         <div className="w-10" />
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 md:px-4 py-6 md:py-4 flex flex-col gap-6">
-        {messages.map((message) => (
-          <ChatMessage key={message.id} message={message} />
+        {conversation?.messages.map((message) => (
+          <ChatMessage 
+            key={message.id} 
+            message={{
+              id: message.id,
+              role: message.role === "USER" ? "user" : "assistant",
+              content: message.content,
+              timestamp: new Date(message.sentAt)
+            }} 
+          />
         ))}
         {isLoading && (
           <div className="flex items-center gap-4 px-6 py-4 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit">

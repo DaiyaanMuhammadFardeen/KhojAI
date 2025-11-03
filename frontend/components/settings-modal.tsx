@@ -1,13 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { X, Moon, Sun } from "lucide-react"
+import { X, Moon, Sun, LogOut } from "lucide-react"
 
 interface SettingsModalProps {
   onClose: () => void
+  onLogout: () => void
 }
 
-export default function SettingsModal({ onClose }: SettingsModalProps) {
+export default function SettingsModal({ onClose, onLogout }: SettingsModalProps) {
   const [darkMode, setDarkMode] = useState(false)
   const [apiKey, setApiKey] = useState("")
   const [apiEndpoint, setApiEndpoint] = useState("https://api.example.com/chat")
@@ -30,6 +31,11 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
         apiEndpoint,
       }),
     )
+    onClose()
+  }
+
+  const handleLogout = () => {
+    onLogout()
     onClose()
   }
 
@@ -92,6 +98,19 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
                 placeholder="Enter your API key"
               />
             </div>
+          </div>
+
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-4">
+              Account
+            </h3>
+            <button
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+              onClick={handleLogout}
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
           </div>
 
           <div>

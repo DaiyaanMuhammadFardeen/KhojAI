@@ -25,7 +25,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
 
   return (
     <div
-      className={`flex gap-4 ${message.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}
+      className={`flex gap-4 ${message.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300 w-full`}
     >
       <div
         className={`flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-xs font-semibold text-white ${message.role === "user" ? "bg-green-600" : "bg-green-600"}`}
@@ -33,7 +33,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
         {message.role === "user" ? "You" : "AI"}
       </div>
 
-      <div className={`flex-1 ${message.role === "user" ? "max-w-xs md:max-w-sm" : "max-w-2xl"}`}>
+      <div className="max-w-[80%] w-fit">
         {message.role === "assistant" ? (
           <div className="relative bg-slate-100 dark:bg-slate-800 rounded-lg p-4 text-slate-900 dark:text-slate-100">
             <ReactMarkdown

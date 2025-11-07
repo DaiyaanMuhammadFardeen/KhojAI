@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import styles from '@/styles/components/signup.module.scss'
 import { UserAPI, CreateUserRequest } from '@/app/api/chat/route'
 
@@ -12,6 +13,8 @@ interface SignupProps {
 export default function Signup({ onLoginSuccess }: SignupProps) {
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -27,25 +30,29 @@ export default function Signup({ onLoginSuccess }: SignupProps) {
       onLoginSuccess()
     } else {
       // Fallback redirect
-      router.push('/')
+      router.push('/chat')
     }
   }
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validate passwords match
+    if (password !== confirmPassword) {
+      setError("Passwords do not match")
+      return
+    }
+    
     setIsLoading(true)
     setError(null)
     setSuccess(null)
 
     try {
-      // Debug: Log the API base URL
-      console.log("API Base URL:", process.env.NEXT_PUBLIC_API_URL);
-      
-      // Create a guest user
+      // Create a user
       const userData: CreateUserRequest = {
-        username: username || `guest_${Date.now()}`,
-        email: email || `${username || 'guest'}_${Date.now()}@khojai.local`,
-        password: "guest_password" // In a real app, this would be handled more securely
+        username,
+        email,
+        password
       }
 
       console.log("Sending signup request with data:", userData);
@@ -85,9 +92,6 @@ export default function Signup({ onLoginSuccess }: SignupProps) {
     setSuccess(null)
     
     try {
-      // Debug: Log the API base URL
-      console.log("API Base URL:", process.env.NEXT_PUBLIC_API_URL);
-      
       // Create a guest user with default values
       const userData: CreateUserRequest = {
         username: `guest_${Date.now()}`,
@@ -137,7 +141,7 @@ export default function Signup({ onLoginSuccess }: SignupProps) {
         <form onSubmit={handleSignup}>
           <div className={styles.formGroup}>
             <label htmlFor="username" className={styles.label}>
-              Username (optional)
+              Username
             </label>
             <input
               id="username"
@@ -147,12 +151,13 @@ export default function Signup({ onLoginSuccess }: SignupProps) {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter your username"
               disabled={isLoading}
+              required
             />
           </div>
           
           <div className={styles.formGroup}>
             <label htmlFor="email" className={styles.label}>
-              Email (optional)
+              Email
             </label>
             <input
               id="email"
@@ -162,6 +167,39 @@ export default function Signup({ onLoginSuccess }: SignupProps) {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               disabled={isLoading}
+              required
+            />
+          </div>
+          
+          <div className={styles.formGroup}>
+            <label htmlFor="password" className={styles.label}>
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              className={styles.input}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              disabled={isLoading}
+              required
+            />
+          </div>
+          
+          <div className={styles.formGroup}>
+            <label htmlFor="confirmPassword" className={styles.label}>
+              Confirm Password
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              className={styles.input}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm your password"
+              disabled={isLoading}
+              required
             />
           </div>
           
@@ -182,6 +220,15 @@ export default function Signup({ onLoginSuccess }: SignupProps) {
         >
           {isLoading ? "Setting up..." : "Continue as Guest"}
         </button>
+        
+        <div className={styles.footer}>
+          <p>
+            Already have an account?{' '}
+            <Link href="/login" className={styles.link}>
+              Sign in
+            </Link>
+          </p>
+        </div>
         
         {error && <div className={styles.error}>{error}</div>}
         {success && <div className={styles.success}>{success}</div>}

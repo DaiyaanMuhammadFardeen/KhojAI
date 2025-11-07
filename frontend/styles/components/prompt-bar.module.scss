@@ -1,56 +1,40 @@
-@import '../variables.scss';
+@use '../variables.scss' as *;
 
 .promptBar {
-  padding: $spacing-lg;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background-color: $color-surface;
   border-top: 1px solid $color-border;
-  background-color: $color-background;
   transition: all $transition-base;
 
   .dark & {
-    background-color: $color-background-dark;
+    background-color: $color-surface-dark;
     border-top-color: $color-border-dark;
-  }
-
-  @media (max-width: 768px) {
-    padding: $spacing-md;
   }
 }
 
-.inputWrapper {
-  display: flex;
-  gap: $spacing-md;
-  align-items: flex-end;
-  background-color: $color-surface;
-  border: 1px solid $color-border;
-  border-radius: $radius-lg;
+.promptInput {
+  flex: 1;
   padding: $spacing-md;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  font-size: 14px;
+  color: $color-text-primary;
+  background-color: $color-background;
   transition: all $transition-fast;
 
   .dark & {
-    background-color: $color-surface-dark;
+    background-color: $color-background-dark;
     border-color: $color-border-dark;
+    color: $color-text-primary-dark;
   }
 
-  &:focus-within {
+  &:focus {
+    outline: none;
     border-color: $color-primary;
     box-shadow: 0 0 0 2px rgba($color-primary, 0.1);
-  }
-}
-
-.input {
-  flex: 1;
-  background: none;
-  border: none;
-  outline: none;
-  resize: none;
-  font-family: inherit;
-  font-size: 14px;
-  color: $color-text-primary;
-  max-height: 120px;
-  line-height: 1.5;
-
-  .dark & {
-    color: $color-text-primary-dark;
   }
 
   &::placeholder {
@@ -60,45 +44,27 @@
       color: $color-text-secondary-dark;
     }
   }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
 }
 
-.sendBtn {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  background-color: $color-primary;
-  border: none;
-  border-radius: $radius-md;
-  color: white;
-  cursor: pointer;
+.submitButton {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: $radius-full;
+  background-color: $color-primary;
+  border: none;
+  color: white;
+  cursor: pointer;
   transition: all $transition-fast;
 
   &:hover:not(:disabled) {
     background-color: $color-primary-dark;
-    transform: scale(1.05);
   }
 
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-  }
-}
-
-.hint {
-  font-size: 12px;
-  color: $color-text-secondary;
-  margin: $spacing-sm 0 0;
-  padding: 0 $spacing-md;
-
-  .dark & {
-    color: $color-text-secondary-dark;
   }
 }

@@ -1,44 +1,90 @@
 # prompt_analyzer.py
 # ------------------------------------------------------------
 # A lightweight, production-ready prompt analyzer.
-# • spaCy (en_core_web_sm) for linguistic parsing
-# • YAKE for unsupervised keyword extraction
+# • spaCy (en_core_web_sm) for linguistic parsing (lazy-loaded)
+# • YAKE for unsupervised keyword extraction (lazy-loaded)
 # • Matcher patterns (from patterns.py) for intent detection
 # • Structured goal extraction (action-object-modifiers)
 # • Optional debug / timing utilities
 # ------------------------------------------------------------
 
+import torch
 import time
 from typing import List, Dict, Any
-
-import spacy
-from spacy.matcher import Matcher
-from yake import KeywordExtractor
 from colorama import Fore, Style, init
+import threading
 
-# ------------------------------------------------------------------
-# Optional: import user-defined intent patterns (patterns.py)
-# ------------------------------------------------------------------
+# ------------------------------------------------------------
+# Optional: pre-initialize CUDA (non-blocking)
+# ------------------------------------------------------------
+try:
+    torch.cuda.set_device(0)
+except Exception:
+    pass  # fallback to CPU if no GPU available
+
+# ------------------------------------------------------------
+# Colorama setup
+# ------------------------------------------------------------
+init(autoreset=True)
+
+# ------------------------------------------------------------
+# Try importing user-defined intent patterns
+# ------------------------------------------------------------
 try:
     from patterns import patterns  # dict: intent_name -> list[pattern]
-except Exception:  # pragma: no cover
+except Exception:
     patterns = {}
 
-# ------------------------------------------------------------------
-# Global initialisation (done once at import time)
-# ------------------------------------------------------------------
-init(autoreset=True)                                 # colour output
-nlp = spacy.load("en_core_web_sm", disable=["ner"])  # fast, no NER needed
-matcher = Matcher(nlp.vocab)
-for intent_name, intent_patterns in patterns.items():
-    matcher.add(intent_name, intent_patterns)
-
-kw_extractor = KeywordExtractor(lan="en", n=3, top=10, dedupLim=0.9)
+# ------------------------------------------------------------
+# Lazy-loaded global references
+# ------------------------------------------------------------
+_nlp = None
+_matcher = None
+_kw_extractor = None
 
 
-# ------------------------------------------------------------------
-# Helper utilities (debug / timing)
-# ------------------------------------------------------------------
+def get_spacy_pipeline():
+    """Lazily initialize and cache spaCy pipeline + matcher."""
+    global _nlp, _matcher
+    if _nlp is None:
+        import spacy
+        from spacy.matcher import Matcher
+
+        print(Fore.CYAN + "[INFO] Loading spaCy model..." + Style.RESET_ALL)
+        _nlp = spacy.load("en_core_web_sm", disable=["ner"])
+        _matcher = Matcher(_nlp.vocab)
+        for intent_name, intent_patterns in patterns.items():
+            _matcher.add(intent_name, intent_patterns)
+        print(Fore.GREEN + "[OK] spaCy initialized." + Style.RESET_ALL)
+    return _nlp, _matcher
+
+
+def get_kw_extractor():
+    """Lazily initialize and cache YAKE keyword extractor."""
+    global _kw_extractor
+    if _kw_extractor is None:
+        from yake import KeywordExtractor
+        print(Fore.CYAN + "[INFO] Initializing YAKE..." + Style.RESET_ALL)
+        _kw_extractor = KeywordExtractor(lan="en", n=3, top=10, dedupLim=0.9)
+        print(Fore.GREEN + "[OK] YAKE ready." + Style.RESET_ALL)
+    return _kw_extractor
+
+
+# Optional background warm-up (won’t block startup)
+def warm_up():
+    try:
+        get_spacy_pipeline()
+        get_kw_extractor()
+    except Exception as e:
+        print(Fore.RED + f"[WARN] Warm-up failed: {e}" + Style.RESET_ALL)
+
+
+threading.Thread(target=warm_up, daemon=True).start()
+
+
+# ------------------------------------------------------------
+# Helper utilities
+# ------------------------------------------------------------
 def _debug(msg: str, colour: str = Fore.CYAN) -> None:
     print(colour + f"[DEBUG] {msg}" + Style.RESET_ALL)
 
@@ -51,60 +97,40 @@ def _time_step(label: str, func, *args, **kwargs):
     return result
 
 
-# ------------------------------------------------------------------
+# ------------------------------------------------------------
 # Core analysis function
-# ------------------------------------------------------------------
+# ------------------------------------------------------------
 def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
-    """
-    Analyse a user prompt and return a structured JSON-compatible dict.
-
-    Returns
-    -------
-    {
-        "intents":   List[str] | "No intent found",
-        "keywords":  List[Dict["term": str, "score": float]],
-        "goals":     List[Dict["action": str, "object": str, "modifiers": List[str]]],
-        "search_queries": List[str]  # Added for web search functionality
-    }
-    """
     total_start = time.perf_counter()
     if debug:
         _debug(f"Analysing: '{prompt}'", Fore.MAGENTA)
 
+    nlp, matcher = get_spacy_pipeline()
+    kw_extractor = get_kw_extractor()
+
     # --------------------------------------------------------------
-    # 1. spaCy parsing (fallback-safe)
+    # 1. spaCy parsing
     # --------------------------------------------------------------
-    doc = None
     try:
         doc = _time_step("spaCy processing", nlp, prompt.lower())
-    except Exception as e:  # pragma: no cover
+    except Exception as e:
         if debug:
             print(Fore.RED + f"[ERROR] spaCy failed: {e}" + Style.RESET_ALL)
+        return {"error": str(e)}
 
     # --------------------------------------------------------------
-    # 2. Intent detection via Matcher
+    # 2. Intent detection
     # --------------------------------------------------------------
-    intents: List[str] = []
-    if doc:
-        matches = _time_step("Intent matching", matcher, doc)
-        intents = list({nlp.vocab.strings[mid] for mid, _, _ in matches})
+    matches = _time_step("Intent matching", matcher, doc)
+    intents = list({nlp.vocab.strings[mid] for mid, _, _ in matches}) or ["No intent found"]
 
     # --------------------------------------------------------------
-    # 3. Keyword extraction (YAKE + noun chunks + entities)
+    # 3. Keyword extraction
     # --------------------------------------------------------------
     yake_kws = _time_step("YAKE extraction", kw_extractor.extract_keywords, prompt)
-
-    # noun chunks (lemmatised, stop-word free)
-    noun_chunks: List[str] = []
-    if doc:
-        noun_chunks = [
-            chunk.lemma_ for chunk in doc.noun_chunks
-                if not chunk.root.is_stop
-        ]
-
-    # merge everything, keep best YAKE score
+    noun_chunks = [chunk.lemma_ for chunk in doc.noun_chunks if not chunk.root.is_stop]
     seen = set()
-    keywords: List[Dict[str, Any]] = []
+    keywords = []
     for term in noun_chunks + [kw[0] for kw in yake_kws]:
         if term not in seen:
             seen.add(term)
@@ -112,28 +138,23 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
             keywords.append({"term": term, "score": score})
 
     # --------------------------------------------------------------
-    # 4. Goal extraction (root verb + direct object+ modifiers)
+    # 4. Goal extraction
     # --------------------------------------------------------------
-    goals: List[Dict[str, Any]] = []
-    if doc:
-        for sent in doc.sents:
-            root = sent.root
-            if root.pos_ == "VERB":
-                objs = [c.text for c in root.children if c.dep_ in ("dobj", "attr")]
-                mods = [c.text for c in root.children if c.dep_ in ("advmod", "amod")]
-                goals.append({
-                    "action": root.lemma_,
-                    "object": " ".join(objs),
-                    "modifiers": mods
-                })
-    # Fallback: simple keyword-based goal if parsing failed
-    if not goals:
+    goals = []
+    for sent in doc.sents:
+        root = sent.root
+        if root.pos_ == "VERB":
+            objs = [c.text for c in root.children if c.dep_ in ("dobj", "attr")]
+            mods = [c.text for c in root.children if c.dep_ in ("advmod", "amod")]
+            goals.append({
+                "action": root.lemma_,
+                "object": " ".join(objs),
+                "modifiers": mods
+            })
+    if not goals:  # fallback
         words = prompt.lower().split()
-        action_verbs = {
-            "calculate", "compute", "search", "find", "write",
-            "explain", "analyze", "generate", "solve", "sing"
-        }
-        found = False
+        action_verbs = {"calculate", "compute", "search", "find", "write",
+                        "explain", "analyze", "generate", "solve", "sing"}
         for i, w in enumerate(words):
             if w in action_verbs:
                 goals.append({
@@ -141,114 +162,87 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
                     "object": " ".join(words[i + 1:]) or "query",
                     "modifiers": []
                 })
-                found = True
                 break
-        if not found:
-            goals.append({
-                "action": "answer",
-                "object": "query",
-                "modifiers": []
-            })
+        if not goals:
+            goals.append({"action": "answer", "object": "query", "modifiers": []})
 
     # --------------------------------------------------------------
-    # 5. Generate search queries based on intents and keywords
+    # 5. Generate search queries
     # --------------------------------------------------------------
-    search_queries: List[str] = []
-
-    # Create search queries from intents and keywords
+    search_queries = []
     if intents and intents != ["No intent found"]:
-        for intent in intents[:3]:  # Limit to top 3 intents
-            search_query = f"{intent} {' '.join([k['term'] for k in keywords[:5]])}"
-            search_queries.append(search_query)
-
-        # Create additional search queries from keywords
-        if keywords:
-            keyword_terms = [k['term'] for k in keywords[:5]]
+        for intent in intents[:3]:
+            search_queries.append(f"{intent} {' '.join([k['term'] for k in keywords[:5]])}")
+        keyword_terms = [k["term"] for k in keywords[:5]]
+        if keyword_terms:
             search_queries.append(" ".join(keyword_terms))
-            # Create more specific queries with different combinations
             if len(keyword_terms) > 1:
                 search_queries.append(" ".join(keyword_terms[:3]))
-
-        # Add original prompt as a fallback search query
+        search_queries.append(prompt)
+        # Deduplicate
+        seen_queries = set()
+        unique_queries = []
+        for q in search_queries:
+            if q not in seen_queries:
+                seen_queries.add(q)
+                unique_queries.append(q)
+        search_queries = unique_queries[:5]
+    else:
+        keyword_terms = [k["term"] for k in keywords[:5]]
+        if keyword_terms:
+            search_queries.append(" ".join(keyword_terms))
         search_queries.append(prompt)
 
-        # Remove duplicates while preserving order
-        unique_search_queries = []
-        seen_queries = set()
-        for query in search_queries:
-            if query not in seen_queries:
-                seen_queries.add(query)
-                unique_search_queries.append(query)
-
-        # Limit to 5 search queries
-        search_queries = unique_search_queries[:5]
-    else:
-        # If no intents found, create search queries from keywords
-        if keywords:
-            keyword_terms = [k['term'] for k in keywords[:5]]
-            search_queries.append(" ".join(keyword_terms))
-            search_queries.append(prompt)
-        else:
-            search_queries.append(prompt)
-
-    # --------------------------------------------------------------
-    # 6. Finalise result
-    # --------------------------------------------------------------
     total_time = (time.perf_counter() - total_start) * 1000
     if debug:
         print(Fore.MAGENTA + f"Total analysis: {total_time:.2f} ms" + Style.RESET_ALL)
 
     return {
-        "intents": intents or ["No intent found"],
+        "intents": intents,
         "keywords": sorted(keywords, key=lambda x: x["score"]),
         "goals": goals,
-        "search_queries": search_queries,  # Added for web search functionality
-        "message": f"**Intent:** {intents or 'No intent found'}\n"
-            f"**Keywords:** {', '.join([k['term'] for k in sorted(keywords, key=lambda x: x['score'], reverse=True)])}\n"
-            f"**Goals:** {', '.join(map(str, goals)) if goals else 'None'}"
+        "search_queries": search_queries,
+        "message": f"**Intent:** {intents}\n"
+                   f"**Keywords:** {', '.join([k['term'] for k in sorted(keywords, key=lambda x: x['score'], reverse=True)])}\n"
+                   f"**Goals:** {', '.join(map(str, goals)) if goals else 'None'}"
     }
 
 
-# ------------------------------------------------------------------
-# Pretty printer (optional, for CLI testing)
-# ------------------------------------------------------------------
+# ------------------------------------------------------------
+# Pretty printer for CLI testing
+# ------------------------------------------------------------
 def _pretty_print(result: Dict[str, Any]) -> None:
     print(Fore.CYAN + "\n" + "=" * 60)
     print(Fore.MAGENTA + " INTENT ANALYSIS RESULT ".center(60))
     print(Fore.CYAN + "=" * 60 + Style.RESET_ALL)
 
-    # Intents
     print(Fore.YELLOW + "\nIntents:" + Style.RESET_ALL)
-    if result["intents"] == "No intent found":
-        print(Fore.RED + "  No intents detected." + Style.RESET_ALL)
-    else:
-        for i in result["intents"]:
-            print(Fore.GREEN + f"  {i}" + Style.RESET_ALL)
+    for i in result.get("intents", []):
+        print(Fore.GREEN + f"  {i}" + Style.RESET_ALL)
 
-    # Keywords
     print(Fore.YELLOW + "\nKeywords:" + Style.RESET_ALL)
-    if not result["keywords"]:
+    kws = result.get("keywords", [])
+    if not kws:
         print(Fore.RED + "  None" + Style.RESET_ALL)
     else:
         print(Fore.CYAN + f"{'#':<3}{'Term':<30}{'Score':<8}" + Style.RESET_ALL)
         print(Fore.CYAN + "-" * 42 + Style.RESET_ALL)
-        for idx, kw in enumerate(result["keywords"], 1):
+        for idx, kw in enumerate(kws, 1):
             print(Fore.WHITE + f"{idx:<3}{kw['term']:<30}{kw['score']:<8.4f}" + Style.RESET_ALL)
 
-    # Goals
     print(Fore.YELLOW + "\nGoals:" + Style.RESET_ALL)
-    for i, g in enumerate(result["goals"], 1):
-        print(Fore.WHITE + f" {i}. Action: " + Fore.GREEN + str(g["action"]))
-        print(Fore.WHITE + f"    Object : " + Fore.CYAN + (str(g["object"]) or "—"))
-        print(Fore.WHITE + f"    Mods   : " + Fore.MAGENTA + (", ".join(g["modifiers"]) if g["modifiers"] else "—"))
+    for i, g in enumerate(result.get("goals", []), 1):
+        print(Fore.WHITE + f" {i}. Action: " + Fore.GREEN + str(g['action']))
+        print(Fore.WHITE + f"    Object : " + Fore.CYAN + (g['object'] or '—'))
+        print(Fore.WHITE + f"    Mods   : " + Fore.MAGENTA + (", ".join(g['modifiers']) if g['modifiers'] else "—"))
         print()
 
     print(Fore.CYAN + "=" * 60 + "\n" + Style.RESET_ALL)
 
 
-# ------------------------------------------------------------------
-# CLI entry-point (for local testing)
-# ------------------------------------------------------------------
+# ------------------------------------------------------------
+# CLI entry-point
+# ------------------------------------------------------------
 if __name__ == "__main__":
     print(Fore.CYAN + "Prompt Analyzer – type 'exit' to quit.\n" + Style.RESET_ALL)
     while True:

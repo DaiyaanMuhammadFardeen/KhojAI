@@ -1,28 +1,24 @@
-@import '../variables.scss';
+@use '../variables.scss' as *;
 
 .sidebar {
-  width: 260px;
+  width: 240px;
   height: 100vh;
-  background-color: $color-background-secondary;
+  background-color: $color-surface;
   border-right: 1px solid $color-border;
   display: flex;
   flex-direction: column;
   transition: all $transition-base;
-  position: relative;
-  z-index: $z-sidebar;
 
   .dark & {
-    background-color: $color-background-secondary-dark;
+    background-color: $color-surface-dark;
     border-right-color: $color-border-dark;
   }
 
   @media (max-width: 768px) {
     position: fixed;
-    left: 0;
-    top: 0;
+    z-index: $z-sidebar;
     transform: translateX(-100%);
-    transition: transform $transition-base;
-
+    
     &.open {
       transform: translateX(0);
     }
@@ -32,61 +28,93 @@
 .header {
   padding: $spacing-lg;
   border-bottom: 1px solid $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
   .dark & {
     border-bottom-color: $color-border-dark;
   }
 }
 
-.newChatBtn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-  padding: $spacing-md;
-  background-color: $color-surface;
-  border: 1px solid $color-border;
-  border-radius: $radius-md;
+.logo {
+  font-size: 18px;
+  font-weight: 600;
   color: $color-text-primary;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all $transition-fast;
+  text-decoration: none;
 
   .dark & {
-    background-color: $color-surface-dark;
-    border-color: $color-border-dark;
     color: $color-text-primary-dark;
+  }
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: $color-text-secondary;
+  cursor: pointer;
+  padding: $spacing-sm;
+  transition: color $transition-fast;
+
+  .dark & {
+    color: $color-text-secondary-dark;
   }
 
   &:hover {
-    background-color: $color-background;
-    border-color: $color-primary;
+    color: $color-text-primary;
 
     .dark & {
-      background-color: $color-background-dark;
+      color: $color-text-primary-dark;
     }
+  }
+
+  @media (min-width: 769px) {
+    display: none;
   }
 }
 
-.chatList {
-  flex: 1;
-  overflow-y: auto;
-  padding: $spacing-lg 0;
+.newChatButton {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  width: 100%;
+  padding: $spacing-md;
+  background-color: $color-primary;
+  border: none;
+  border-radius: $radius-md;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover:not(:disabled) {
+    background-color: $color-primary-dark;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
-.section {
-  padding: 0 $spacing-md $spacing-lg;
+.chatsContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-md 0;
+}
+
+.chatSection {
+  margin-bottom: $spacing-lg;
 }
 
 .sectionTitle {
   font-size: 12px;
   font-weight: 600;
-  color: $color-text-secondary;
   text-transform: uppercase;
+  color: $color-text-secondary;
+  padding: $spacing-sm $spacing-lg;
   letter-spacing: 0.5px;
-  margin: 0 0 $spacing-md $spacing-md;
-  padding: 0;
 
   .dark & {
     color: $color-text-secondary-dark;
@@ -97,54 +125,70 @@
   display: flex;
   align-items: center;
   gap: $spacing-md;
-  padding: $spacing-md;
-  margin-bottom: $spacing-sm;
-  background-color: transparent;
+  padding: $spacing-sm $spacing-lg;
+  margin: 0 $spacing-md;
   border-radius: $radius-md;
   color: $color-text-primary;
+  text-decoration: none;
   cursor: pointer;
   transition: all $transition-fast;
-  position: relative;
 
   .dark & {
     color: $color-text-primary-dark;
   }
 
   &:hover {
-    background-color: $color-surface;
+    background-color: $color-background-secondary;
 
     .dark & {
-      background-color: $color-surface-dark;
+      background-color: $color-background-secondary-dark;
     }
   }
 
-  svg {
-    flex-shrink: 0;
-    color: $color-text-secondary;
+  &.active {
+    background-color: $color-background-secondary;
+    border-left: 3px solid $color-primary;
 
     .dark & {
-      color: $color-text-secondary-dark;
+      background-color: $color-background-secondary-dark;
     }
+  }
+}
+
+.chatIcon {
+  flex-shrink: 0;
+  color: $color-text-secondary;
+
+  .dark & {
+    color: $color-text-secondary-dark;
   }
 }
 
 .chatTitle {
   flex: 1;
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 14px;
 }
 
-.deleteBtn {
+.chatActions {
+  display: flex;
+  gap: $spacing-sm;
+  opacity: 0;
+  transition: opacity $transition-fast;
+
+  .chatItem:hover & {
+    opacity: 1;
+  }
+}
+
+.actionButton {
   background: none;
   border: none;
   color: $color-text-secondary;
   cursor: pointer;
-  padding: $spacing-sm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: $spacing-xs;
   transition: color $transition-fast;
 
   .dark & {
@@ -152,7 +196,11 @@
   }
 
   &:hover {
-    color: #ef4444;
+    color: $color-text-primary;
+
+    .dark & {
+      color: $color-text-primary-dark;
+    }
   }
 }
 
@@ -165,7 +213,7 @@
   }
 }
 
-.settingsBtn {
+.settingsButton {
   width: 100%;
   display: flex;
   align-items: center;
@@ -175,9 +223,9 @@
   border: 1px solid $color-border;
   border-radius: $radius-md;
   color: $color-text-primary;
-  cursor: pointer;
   font-size: 14px;
   font-weight: 500;
+  cursor: pointer;
   transition: all $transition-fast;
 
   .dark & {
@@ -186,41 +234,56 @@
   }
 
   &:hover {
-    background-color: $color-surface;
+    background-color: $color-background-secondary;
     border-color: $color-primary;
 
     .dark & {
-      background-color: $color-surface-dark;
+      background-color: $color-background-secondary-dark;
     }
   }
 }
 
-.toggleBtn {
-  display: none;
+.menuButton {
   position: fixed;
   bottom: $spacing-lg;
   left: $spacing-lg;
   width: 48px;
   height: 48px;
+  border-radius: $radius-full;
   background-color: $color-primary;
-  border: none;
-  border-radius: $radius-md;
   color: white;
+  border: none;
+  display: none;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  z-index: $z-sidebar - 1;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   transition: all $transition-fast;
+  z-index: 10;
 
-  .dark & {
-    background-color: $color-primary;
+  &:hover {
+    background-color: $color-primary-dark;
+    transform: scale(1.05);
   }
 
   @media (max-width: 768px) {
     display: flex;
-    align-items: center;
-    justify-content: center;
   }
+}
 
-  &:hover {
-    transform: scale(1.05);
+.overlay {
+  @media (max-width: 768px) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 30;
+    display: none;
+
+    &.open {
+      display: block;
+    }
   }
 }

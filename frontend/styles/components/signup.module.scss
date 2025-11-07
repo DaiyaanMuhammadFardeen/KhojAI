@@ -1,4 +1,4 @@
-@import '../variables.scss';
+@use '../variables.scss' as *;
 
 .signupContainer {
   display: flex;
@@ -168,4 +168,27 @@
   font-size: 14px;
   margin-top: $spacing-sm;
   text-align: center;
+}
+
+.footer {
+  text-align: center;
+  margin-top: $spacing-lg;
+  font-size: 14px;
+  color: $color-text-secondary;
+
+  .dark & {
+    color: $color-text-secondary-dark;
+  }
+}
+
+.link {
+  color: $color-primary;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color $transition-fast;
+
+  &:hover {
+    color: $color-primary-dark;
+    text-decoration: underline;
+  }
 }

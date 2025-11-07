@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Sidebar from "@/components/sidebar"
 import ChatInterface from "@/components/chat-interface"
 import SettingsModal from "@/components/settings-modal"
+import { handleLogout } from '@/app/api/chat/route'
 
 export default function ChatPage() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -20,6 +21,14 @@ export default function ChatPage() {
     }
   }, [router])
 
+  const handleLogoutClick = () => {
+    // Use the centralized logout function
+    handleLogout()
+    
+    // Redirect to login page
+    router.push('/')
+  }
+
   return (
     <div className="flex h-screen w-full bg-white dark:bg-slate-950 transition-colors duration-200">
       <Sidebar
@@ -29,7 +38,7 @@ export default function ChatPage() {
         onSettingsClick={() => setSettingsOpen(true)}
       />
       <ChatInterface onMenuClick={() => setSidebarOpen(!sidebarOpen)} chatId={currentChatId} />
-      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} />}
+      {settingsOpen && <SettingsModal onClose={() => setSettingsOpen(false)} onLogout={handleLogoutClick} />}
     </div>
   )
 }

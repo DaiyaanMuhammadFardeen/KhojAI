@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Menu, Plus, Settings, Trash2, MessageSquare, X, Edit3, Check, XCircle } from "lucide-react"
 import { ConversationAPI } from '@/app/api/chat/route'
 
@@ -10,6 +11,7 @@ interface SidebarProps {
   onToggle: () => void
   onChatSelect: (chatId: string) => void
   onSettingsClick: () => void
+  selectedChatId?: string
 }
 
 interface ChatItem {
@@ -18,12 +20,13 @@ interface ChatItem {
   timestamp: Date
 }
 
-export default function Sidebar({ isOpen, onToggle, onChatSelect, onSettingsClick }: SidebarProps) {
+export default function Sidebar({ isOpen, onToggle, onChatSelect, onSettingsClick, selectedChatId }: SidebarProps) {
   const [chats, setChats] = useState<ChatItem[]>([])
   const [hoveredChatId, setHoveredChatId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [editingChatId, setEditingChatId] = useState<string | null>(null)
   const [editTitle, setEditTitle] = useState("")
+  const router = useRouter()
 
   // Load conversations from backend
   useEffect(() => {
@@ -108,6 +111,7 @@ export default function Sidebar({ isOpen, onToggle, onChatSelect, onSettingsClic
 
       setChats(prev => [newChat, ...prev])
       onChatSelect(newChat.id)
+      router.push(`/chat/${newChat.id}`)
     } catch (error) {
       console.error("Error creating new conversation:", error)
     }
@@ -118,6 +122,11 @@ export default function Sidebar({ isOpen, onToggle, onChatSelect, onSettingsClic
     try {
       await ConversationAPI.delete(id)
       setChats(chats.filter((chat) => chat.id !== id))
+      
+      // If we're deleting the currently selected chat, redirect to base chat page
+      if (selectedChatId === id) {
+        router.push('/chat')
+      }
     } catch (error) {
       console.error("Error deleting conversation:", error)
     }
@@ -157,6 +166,11 @@ export default function Sidebar({ isOpen, onToggle, onChatSelect, onSettingsClic
     } else if (e.key === 'Escape') {
       cancelEditing(e as any)
     }
+  }
+
+  const handleChatSelect = (chatId: string) => {
+    onChatSelect(chatId)
+    router.push(`/chat/${chatId}`)
   }
 
   const formatTime = (date: Date) => {
@@ -243,10 +257,12 @@ export default function Sidebar({ isOpen, onToggle, onChatSelect, onSettingsClic
               {todayChats.map((chat) => (
                 <div
                   key={chat.id}
-                  className="flex items-center gap-3 px-3 py-2 mb-1 bg-transparent rounded-md text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all relative group"
+                  className={`flex items-center gap-3 px-3 py-2 mb-1 bg-transparent rounded-md text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all relative group ${
+                    selectedChatId === chat.id ? "bg-white dark:bg-slate-800 border-l-4 border-green-500" : ""
+                  }`}
                   onMouseEnter={() => setHoveredChatId(chat.id)}
                   onMouseLeave={() => setHoveredChatId(null)}
-                  onClick={() => onChatSelect(chat.id)}
+                  onClick={() => handleChatSelect(chat.id)}
                 >
                   {editingChatId === chat.id ? (
                     <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
@@ -307,10 +323,12 @@ export default function Sidebar({ isOpen, onToggle, onChatSelect, onSettingsClic
               {yesterdayChats.map((chat) => (
                 <div
                   key={chat.id}
-                  className="flex items-center gap-3 px-3 py-2 mb-1 bg-transparent rounded-md text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all relative group"
+                  className={`flex items-center gap-3 px-3 py-2 mb-1 bg-transparent rounded-md text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all relative group ${
+                    selectedChatId === chat.id ? "bg-white dark:bg-slate-800 border-l-4 border-green-500" : ""
+                  }`}
                   onMouseEnter={() => setHoveredChatId(chat.id)}
                   onMouseLeave={() => setHoveredChatId(null)}
-                  onClick={() => onChatSelect(chat.id)}
+                  onClick={() => handleChatSelect(chat.id)}
                 >
                   {editingChatId === chat.id ? (
                     <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
@@ -371,10 +389,12 @@ export default function Sidebar({ isOpen, onToggle, onChatSelect, onSettingsClic
               {previousChats.map((chat) => (
                 <div
                   key={chat.id}
-                  className="flex items-center gap-3 px-3 py-2 mb-1 bg-transparent rounded-md text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all relative group"
+                  className={`flex items-center gap-3 px-3 py-2 mb-1 bg-transparent rounded-md text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all relative group ${
+                    selectedChatId === chat.id ? "bg-white dark:bg-slate-800 border-l-4 border-green-500" : ""
+                  }`}
                   onMouseEnter={() => setHoveredChatId(chat.id)}
                   onMouseLeave={() => setHoveredChatId(null)}
-                  onClick={() => onChatSelect(chat.id)}
+                  onClick={() => handleChatSelect(chat.id)}
                 >
                   {editingChatId === chat.id ? (
                     <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
@@ -435,10 +455,12 @@ export default function Sidebar({ isOpen, onToggle, onChatSelect, onSettingsClic
               {olderChats.map((chat) => (
                 <div
                   key={chat.id}
-                  className="flex items-center gap-3 px-3 py-2 mb-1 bg-transparent rounded-md text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all relative group"
+                  className={`flex items-center gap-3 px-3 py-2 mb-1 bg-transparent rounded-md text-slate-900 dark:text-slate-100 cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all relative group ${
+                    selectedChatId === chat.id ? "bg-white dark:bg-slate-800 border-l-4 border-green-500" : ""
+                  }`}
                   onMouseEnter={() => setHoveredChatId(chat.id)}
                   onMouseLeave={() => setHoveredChatId(null)}
-                  onClick={() => onChatSelect(chat.id)}
+                  onClick={() => handleChatSelect(chat.id)}
                 >
                   {editingChatId === chat.id ? (
                     <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>

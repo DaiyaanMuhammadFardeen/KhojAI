@@ -1,6 +1,6 @@
-@import '../variables.scss';
+@use '../variables.scss' as *;
 
-.chatInterface {
+.container {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -36,7 +36,7 @@
   }
 }
 
-.menuBtn {
+.menuButton {
   display: none;
   background: none;
   border: none;
@@ -75,10 +75,6 @@
   }
 }
 
-.spacer {
-  width: 40px;
-}
-
 .messagesContainer {
   flex: 1;
   overflow-y: auto;
@@ -92,41 +88,134 @@
   }
 }
 
-.loadingMessage {
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
+.inputContainer {
   padding: $spacing-lg;
+  border-top: 1px solid $color-border;
+  background-color: $color-background;
+  transition: all $transition-base;
+
+  .dark & {
+    background-color: $color-background-dark;
+    border-top-color: $color-border-dark;
+  }
+
+  @media (max-width: 768px) {
+    padding: $spacing-md;
+  }
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: $spacing-md;
+  padding: $spacing-md;
   background-color: $color-surface;
+  border: 1px solid $color-border;
   border-radius: $radius-lg;
-  width: fit-content;
+  transition: all $transition-base;
 
   .dark & {
     background-color: $color-surface-dark;
+    border-color: $color-border-dark;
+  }
+
+  &:focus-within {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 2px rgba($color-primary, 0.1);
   }
 }
 
-.loadingDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+.input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  resize: none;
+  min-height: 24px;
+  max-height: 200px;
+  font-size: 16px;
+  color: $color-text-primary;
+  outline: none;
+
+  .dark & {
+    color: $color-text-primary-dark;
+  }
+
+  &::placeholder {
+    color: $color-text-secondary;
+
+    .dark & {
+      color: $color-text-secondary-dark;
+    }
+  }
+}
+
+.sendButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: $radius-full;
   background-color: $color-primary;
-  animation: pulse 1.4s infinite;
+  border: none;
+  color: white;
+  cursor: pointer;
+  transition: all $transition-fast;
 
-  &:nth-child(2) {
-    animation-delay: 0.2s;
+  &:hover:not(:disabled) {
+    background-color: $color-primary-dark;
   }
 
-  &:nth-child(3) {
-    animation-delay: 0.4s;
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 }
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.3;
+.emptyChatContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: $color-background;
+  transition: background-color $transition-base;
+
+  .dark & {
+    background-color: $color-background-dark;
   }
-  50% {
-    opacity: 1;
+}
+
+.emptyChatContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 500px;
+  padding: $spacing-xl;
+}
+
+.emptyChatIcon {
+  color: $color-primary;
+  margin-bottom: $spacing-lg;
+}
+
+.emptyChatTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: $color-text-primary;
+  margin: 0 0 $spacing-md;
+
+  .dark & {
+    color: $color-text-primary-dark;
+  }
+}
+
+.emptyChatDescription {
+  font-size: 16px;
+  color: $color-text-secondary;
+  margin: 0;
+
+  .dark & {
+    color: $color-text-secondary-dark;
   }
 }

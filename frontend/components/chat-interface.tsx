@@ -1,193 +1,201 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import ChatMessage from "./chat-message"
-import PromptBar from "./prompt-bar"
-import { Menu } from "lucide-react"
-import { ConversationAPI, MessageAPI } from '@/app/api/chat/route'
-
-interface Message {
-  id: string
-  role: "USER" | "AI"
-  content: string
-  sentAt: string
-}
-
-interface Conversation {
-  id: string
-  title: string
-  createdAt: string
-  messages: Message[]
-}
+import { useState, useEffect, useRef } from "react"
+import { Menu, Send, Plus } from "lucide-react"
+import { MessageAPI, AIApi, CreateMessageRequest, ConversationAPI } from '@/app/api/chat/route'
+import ChatMessage from "@/components/chat-message"
+import styles from '@/styles/components/chat-interface.module.scss'
 
 interface ChatInterfaceProps {
   onMenuClick: () => void
   chatId: string | null
 }
 
+interface Message {
+  id: string
+  role: 'USER' | 'AI'
+  content: string
+  sentAt: Date
+}
+
 export default function ChatInterface({ onMenuClick, chatId }: ChatInterfaceProps) {
-  const [conversation, setConversation] = useState<Conversation | null>(null)
+  const [messages, setMessages] = useState<Message[]>([])
+  const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Load messages when chatId changes
+  useEffect(() => {
+    if (chatId) {
+      loadMessages(chatId)
+    } else {
+      setMessages([])
+    }
+  }, [chatId])
+
+  // Scroll to bottom of messages
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  const loadMessages = async (id: string) => {
+    try {
+      const response = await ConversationAPI.get(id)
+      const loadedMessages = response.data.messages.map(msg => ({
+        ...msg,
+        sentAt: new Date(msg.sentAt)
+      }))
+      setMessages(loadedMessages)
+    } catch (error) {
+      console.error("Failed to load messages:", error)
+    }
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
-  useEffect(() => {
-    scrollToBottom()
-  }, [conversation?.messages])
-
-  // Load conversation when chatId changes
-  useEffect(() => {
-    const loadConversation = async () => {
-      if (!chatId) {
-        // No chatId means we start with no conversation
-        setConversation(null)
-        return;
-      } else {
-        // Load existing conversation
-        try {
-          const response = await ConversationAPI.get(chatId)
-          setConversation(response.data)
-        } catch (error) {
-          console.error("Error loading conversation:", error)
-        }
-      }
-    }
-
-    loadConversation()
-  }, [chatId])
-
-  // Update conversation title based on first message
-  useEffect(() => {
-    const updateConversationTitle = async () => {
-      if (!conversation || conversation.messages.length === 0) return
-
-      // If this is still titled "New Chat" and we have messages, update the title
-      if (conversation.title === "New Chat" && conversation.messages.length > 0) {
-        const firstUserMessage = conversation.messages.find(msg => msg.role === "USER")
-        if (firstUserMessage) {
-          // Get first 5 words of the first message
-          const words = firstUserMessage.content.split(' ').slice(0, 5)
-          const newTitle = words.join(' ')
-          
-          try {
-            const response = await ConversationAPI.updateTitle(conversation.id, newTitle)
-            setConversation(response.data)
-          } catch (error) {
-            console.error("Error updating conversation title:", error)
-          }
-        }
-      }
-    }
-
-    updateConversationTitle()
-  }, [conversation?.messages.length, conversation?.id, conversation?.title])
-
-  const handleSendMessage = async (content: string) => {
-    if (!content.trim()) return
-
-    setIsLoading(true)
+  const handleSend = async () => {
+    if (!inputValue.trim() || !chatId || isLoading) return
 
     try {
-      // If no conversation exists, create one
-      let currentConversation = conversation;
-      if (!currentConversation) {
-        const userId = localStorage.getItem('userId')
-        if (!userId) {
-          console.error("No user ID found")
-          setIsLoading(false)
-          return
-        }
-
-        // Create new conversation with the first 5 words of the message as title
-        const words = content.split(' ').slice(0, 5)
-        const title = words.join(' ')
-        
-        const convResponse = await ConversationAPI.create({
-          userId: userId,
-          title: title || "New Chat"
-        })
-
-        currentConversation = convResponse.data
-        setConversation(currentConversation)
-        
-        // Dispatch a custom event to notify the sidebar about the new conversation
-        window.dispatchEvent(new CustomEvent('conversationCreated', { detail: currentConversation.id }))
-      }
-
-      // Send message to the conversation
-      const response = await MessageAPI.create({
-        convId: currentConversation.id,
-        role: "USER",
-        content: content
-      })
-
-      // Update the conversation with the full response
-      setConversation(response.data)
-    } catch (error) {
-      console.error("Error sending message:", error)
+      setIsLoading(true)
       
-      // Add error message to the conversation
-      const errorMessage: Message = {
+      // Add user message to UI immediately
+      const userMessage: Message = {
         id: Date.now().toString(),
-        role: "AI",
-        content: "Sorry, I encountered an error processing your request. Please try again.",
-        sentAt: new Date().toISOString()
+        role: 'USER',
+        content: inputValue,
+        sentAt: new Date()
       }
       
-      setConversation(prev => {
-        if (!prev) return null
-        return {
-          ...prev,
-          messages: [...prev.messages, errorMessage]
-        }
-      })
+      setMessages(prev => [...prev, userMessage])
+      setInputValue("")
+
+      // Send user message to backend
+      const userMessageRequest: CreateMessageRequest = {
+        convId: chatId,
+        role: 'USER',
+        content: inputValue.trim()
+      }
+      
+      const userResponse = await MessageAPI.create(userMessageRequest)
+      
+      // Update user message with real ID
+      setMessages(prev => prev.map(msg => 
+        msg.id === userMessage.id 
+          ? { ...msg, id: userResponse.data.messages[userResponse.data.messages.length - 2].id } 
+          : msg
+      ))
+
+      // Get AI response
+      const aiResponse = await AIApi.generateResponse({ prompt: inputValue.trim() })
+      
+      // Add AI message to UI
+      const aiMessage: Message = {
+        id: Date.now().toString(),
+        role: 'AI',
+        content: aiResponse.data.message,
+        sentAt: new Date()
+      }
+      
+      setMessages(prev => [...prev, aiMessage])
+      
+      // Send AI message to backend
+      const aiMessageRequest: CreateMessageRequest = {
+        convId: chatId,
+        role: 'AI',
+        content: aiResponse.data.message
+      }
+      
+      const aiResponseBackend = await MessageAPI.create(aiMessageRequest)
+      
+      // Update AI message with real ID
+      setMessages(prev => prev.map(msg => 
+        msg.id === aiMessage.id 
+          ? { ...msg, id: aiResponseBackend.data.messages[aiResponseBackend.data.messages.length - 1].id } 
+          : msg
+      ))
+    } catch (error) {
+      console.error("Failed to send message:", error)
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
+  if (!chatId) {
+    return (
+      <div className={styles.emptyChatContainer}>
+        <div className={styles.emptyChatContent}>
+          <Plus size={48} className={styles.emptyChatIcon} />
+          <h2 className={styles.emptyChatTitle}>No Chat Selected</h2>
+          <p className={styles.emptyChatDescription}>
+            Select an existing chat from the sidebar or create a new one to get started.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex-1 flex flex-col h-screen bg-white dark:bg-slate-950 transition-colors duration-200">
-      <div className="flex items-center justify-between px-6 py-4 md:px-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950">
-        <button
-          className="flex md:hidden items-center justify-center text-slate-900 dark:text-slate-100 cursor-pointer p-2 hover:text-green-600 transition-colors"
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <button 
+          className={styles.menuButton}
           onClick={onMenuClick}
         >
-          <Menu size={24} />
+          <Menu size={20} />
         </button>
-        <div className="hidden md:flex w-10"></div>
-        <h1 className="text-lg md:text-base font-semibold text-slate-900 dark:text-slate-100">
-          {conversation?.title || "ChatBot"}
-        </h1>
-        <div className="w-10" />
+        <h1 className={styles.title}>KhojAI Chat</h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 md:px-4 py-6 md:py-4 flex flex-col gap-6">
-        {conversation?.messages.map((message) => (
-          <ChatMessage 
-            key={message.id} 
-            message={{
-              id: message.id,
-              role: message.role === "USER" ? "user" : "assistant",
-              content: message.content,
-              timestamp: new Date(message.sentAt)
-            }} 
+      <div className={styles.messagesContainer}>
+        {messages.map((message) => (
+          <ChatMessage
+            key={message.id}
+            role={message.role}
+            content={message.content}
+            timestamp={message.sentAt}
           />
         ))}
         {isLoading && (
-          <div className="flex items-center gap-4 px-6 py-4 bg-slate-100 dark:bg-slate-800 rounded-lg w-fit">
-            <div className="w-2 h-2 rounded-full bg-green-600 animate-pulse" />
-            <div className="w-2 h-2 rounded-full bg-green-600 animate-pulse" style={{ animationDelay: "0.2s" }} />
-            <div className="w-2 h-2 rounded-full bg-green-600 animate-pulse" style={{ animationDelay: "0.4s" }} />
-          </div>
+          <ChatMessage
+            role="AI"
+            content=""
+            timestamp={new Date()}
+            isLoading={true}
+          />
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <PromptBar onSendMessage={handleSendMessage} isLoading={isLoading} />
+      <div className={styles.inputContainer}>
+        <div className={styles.inputWrapper}>
+          <textarea
+            className={styles.input}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type your message..."
+            disabled={isLoading}
+            rows={1}
+          />
+          <button
+            className={styles.sendButton}
+            onClick={handleSend}
+            disabled={!inputValue.trim() || isLoading}
+          >
+            <Send size={20} />
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

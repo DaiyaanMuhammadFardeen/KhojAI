@@ -1,6 +1,6 @@
-@import '../variables.scss';
+@use '../variables.scss' as *;
 
-.overlay {
+.modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -11,50 +11,26 @@
   align-items: center;
   justify-content: center;
   z-index: $z-modal;
-  animation: fadeIn 0.2s ease-out;
+  padding: $spacing-md;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.modal {
-  background-color: $color-background;
+.modalContent {
+  background-color: $color-surface;
   border-radius: $radius-lg;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 100%;
   max-width: 500px;
-  width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  animation: slideUp 0.3s ease-out;
+  transition: all $transition-base;
 
   .dark & {
-    background-color: $color-background-dark;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-  }
-
-  @media (max-width: 768px) {
-    width: 95%;
+    background-color: $color-surface-dark;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   }
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.header {
+.modalHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -66,7 +42,7 @@
   }
 }
 
-.title {
+.modalTitle {
   font-size: 20px;
   font-weight: 600;
   color: $color-text-primary;
@@ -77,15 +53,12 @@
   }
 }
 
-.closeBtn {
+.closeButton {
   background: none;
   border: none;
   color: $color-text-secondary;
   cursor: pointer;
   padding: $spacing-sm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   transition: color $transition-fast;
 
   .dark & {
@@ -101,80 +74,12 @@
   }
 }
 
-.content {
+.modalBody {
   padding: $spacing-lg;
 }
 
-.section {
+.formGroup {
   margin-bottom: $spacing-xl;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.sectionTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: $color-text-primary;
-  margin: 0 0 $spacing-md;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-
-  .dark & {
-    color: $color-text-primary-dark;
-  }
-}
-
-.setting {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: $spacing-md;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.settingLabel {
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-  color: $color-text-primary;
-
-  .dark & {
-    color: $color-text-primary-dark;
-  }
-}
-
-.toggle {
-  width: 48px;
-  height: 28px;
-  background-color: $color-border;
-  border: none;
-  border-radius: $radius-full;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 2px;
-  transition: all $transition-fast;
-  color: white;
-
-  .dark & {
-    background-color: $color-border-dark;
-  }
-
-  &.active {
-    background-color: $color-primary;
-    justify-content: flex-end;
-  }
-
-  svg {
-    width: 20px;
-    height: 20px;
-  }
 }
 
 .label {
@@ -220,52 +125,124 @@
   }
 }
 
-.aboutText {
-  font-size: 14px;
-  color: $color-text-secondary;
-  margin: 0;
+.switchContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md 0;
+  border-bottom: 1px solid $color-border-light;
 
   .dark & {
-    color: $color-text-secondary-dark;
+    border-bottom-color: $color-border-light-dark;
+  }
+
+  &:last-child {
+    border-bottom: none;
   }
 }
 
-.footer {
+.switchLabel {
+  font-size: 14px;
+  color: $color-text-primary;
+
+  .dark & {
+    color: $color-text-primary-dark;
+  }
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.switchInput {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switchSlider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+
+  &:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+}
+
+.switchInput:checked + .switchSlider {
+  background-color: $color-primary;
+}
+
+.switchInput:checked + .switchSlider:before {
+  transform: translateX(20px);
+}
+
+.buttonGroup {
   display: flex;
   gap: $spacing-md;
-  padding: $spacing-lg;
-  border-top: 1px solid $color-border;
-  justify-content: flex-end;
-
-  .dark & {
-    border-top-color: $color-border-dark;
-  }
+  margin-top: $spacing-lg;
 }
 
-.cancelBtn,
-.saveBtn {
-  padding: $spacing-md $spacing-lg;
+.primaryButton {
+  flex: 1;
+  padding: $spacing-md;
+  background-color: $color-primary;
+  border: none;
   border-radius: $radius-md;
+  color: white;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all $transition-fast;
-  border: none;
+
+  &:hover:not(:disabled) {
+    background-color: $color-primary-dark;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
-.cancelBtn {
-  background-color: $color-surface;
-  color: $color-text-primary;
+.secondaryButton {
+  flex: 1;
+  padding: $spacing-md;
+  background-color: transparent;
   border: 1px solid $color-border;
+  border-radius: $radius-md;
+  color: $color-text-primary;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all $transition-fast;
 
   .dark & {
-    background-color: $color-surface-dark;
     border-color: $color-border-dark;
     color: $color-text-primary-dark;
   }
 
   &:hover {
     background-color: $color-background-secondary;
+    border-color: $color-primary;
 
     .dark & {
       background-color: $color-background-secondary-dark;
@@ -273,11 +250,19 @@
   }
 }
 
-.saveBtn {
-  background-color: $color-primary;
+.dangerButton {
+  flex: 1;
+  padding: $spacing-md;
+  background-color: #ef4444;
+  border: none;
+  border-radius: $radius-md;
   color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all $transition-fast;
 
   &:hover {
-    background-color: $color-primary-dark;
+    background-color: #dc2626;
   }
 }

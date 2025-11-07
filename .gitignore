@@ -27,3 +27,5 @@ replay_pid*
 __pycache__
 .vim/
 .lingma/
+target/*
+.mvn/

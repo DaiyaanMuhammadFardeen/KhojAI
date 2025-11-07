@@ -1,17 +1,20 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { handleLogout } from '@/app/api/chat/route'
 import { X, Moon, Sun, LogOut } from "lucide-react"
 
 interface SettingsModalProps {
   onClose: () => void
-  onLogout: () => void
+  onLogout?: () => void
 }
 
 export default function SettingsModal({ onClose, onLogout }: SettingsModalProps) {
   const [darkMode, setDarkMode] = useState(false)
   const [apiKey, setApiKey] = useState("")
   const [apiEndpoint, setApiEndpoint] = useState("https://api.example.com/chat")
+  const router = useRouter()
 
   const handleDarkModeToggle = () => {
     setDarkMode(!darkMode)
@@ -34,9 +37,18 @@ export default function SettingsModal({ onClose, onLogout }: SettingsModalProps)
     onClose()
   }
 
-  const handleLogout = () => {
-    onLogout()
+  const handleLogoutClick = () => {
+    // If onLogout function is provided, call it
+    if (onLogout) {
+      onLogout()
+    } else {
+      // Use the default logout function
+      handleLogout()
+    }
+    
+    // Close modal and redirect to home
     onClose()
+    router.push('/')
   }
 
   return (
@@ -106,7 +118,7 @@ export default function SettingsModal({ onClose, onLogout }: SettingsModalProps)
             </h3>
             <button
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-              onClick={handleLogout}
+              onClick={handleLogoutClick}
             >
               <LogOut size={18} />
               Logout

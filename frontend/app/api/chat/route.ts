@@ -1,5 +1,6 @@
 // src/app/api/routes.ts
 import axios, { AxiosResponse } from 'axios';
+import { useRouter } from 'next/navigation';
 
 // -----------------------------------------------------------------------------
 // Base URL – change once if you move the backend
@@ -21,6 +22,17 @@ export interface CreateUserRequest {
   username: string;
   email: string;
   password: string;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface JwtResponse {
+  token: string;
+  username: string;
+  userId: string;
 }
 
 export interface UpdateUserRequest {
@@ -54,6 +66,14 @@ export interface CreateMessageRequest {
   content: string;
 }
 
+export interface AiRequest {
+  prompt: string;
+}
+
+export interface AiResponse {
+  message: string;
+}
+
 // -----------------------------------------------------------------------------
 // Helper – generic Axios wrapper (you can add interceptors for JWT later)
 // -----------------------------------------------------------------------------
@@ -81,11 +101,31 @@ api.interceptors.response.use(
 // Add a request interceptor to log requests
 api.interceptors.request.use(
   (config) => {
+    // Get token from localStorage and add to headers if it exists
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     console.log('Making request to:', config.baseURL + config.url);
     return config;
   },
   (error) => {
     console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+// Add a response interceptor to handle 401 errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token is invalid or expired, redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('username');
+      window.location.href = '/';
+    }
     return Promise.reject(error);
   }
 );
@@ -97,6 +137,35 @@ export const setAuthToken = (token: string | null) => {
   } else {
     delete api.defaults.headers.common['Authorization'];
   }
+};
+
+/** Handle user logout */
+export const handleLogout = () => {
+  // Clear all user-related data from localStorage
+  localStorage.removeItem('token');
+  localStorage.removeItem('userId');
+  localStorage.removeItem('username');
+  localStorage.removeItem('conversations');
+  
+  // Remove authorization header from API client
+  delete api.defaults.headers.common['Authorization'];
+};
+
+// -----------------------------------------------------------------------------
+// AUTH ENDPOINTS – /api/v1/auth
+// -----------------------------------------------------------------------------
+export const AuthAPI = {
+  /** POST /api/v1/auth/login */
+  login: async (data: LoginRequest): Promise<AxiosResponse<JwtResponse>> => {
+    try {
+      console.log('Sending login request to:', API_BASE + '/api/v1/auth/login');
+      const response = await api.post<JwtResponse>('/api/v1/auth/login', data);
+      return response;
+    } catch (error) {
+      console.error('Error in AuthAPI.login:', error);
+      throw error;
+    }
+  },
 };
 
 // -----------------------------------------------------------------------------
@@ -174,4 +243,17 @@ export const MessageAPI = {
   /** DELETE /api/v1/messages/{id} */
   delete: (id: string): Promise<AxiosResponse<void>> =>
     api.delete<void>(`/api/v1/messages/${id}`),
+};
+
+// -----------------------------------------------------------------------------
+// AI ENDPOINTS – /api/v1/ai
+// -----------------------------------------------------------------------------
+export const AIApi = {
+  /** POST /api/v1/ai/analyze */
+  analyze: (data: AiRequest): Promise<AxiosResponse<AiResponse>> =>
+    api.post<AiResponse>('/api/v1/ai/analyze', data),
+
+  /** POST /api/v1/ai/generate-response */
+  generateResponse: (data: AiRequest): Promise<AxiosResponse<AiResponse>> =>
+    api.post<AiResponse>('/api/v1/ai/generate-response', data),
 };

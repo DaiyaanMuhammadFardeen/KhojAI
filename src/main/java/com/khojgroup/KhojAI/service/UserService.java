@@ -16,5 +16,6 @@ public class UserService {
     private final UserRepository repo;
     public User save(User user) { return repo.save(user); }
     public User findById(UUID id) { return repo.findById(id).orElseThrow(() -> new EntityNotFoundException("User not found")); }
+    public User findByUsername(String username) { return repo.findByUsername(username).orElseThrow(() -> new EntityNotFoundException("User not found")); }
     public void deleteById(UUID id) { repo.deleteById(id); }
 }

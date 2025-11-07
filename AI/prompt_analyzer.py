@@ -63,7 +63,8 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
     {
         "intents":   List[str] | "No intent found",
         "keywords":  List[Dict["term": str, "score": float]],
-        "goals":     List[Dict["action": str, "object": str, "modifiers": List[str]]]
+        "goals":     List[Dict["action": str, "object": str, "modifiers": List[str]]],
+        "search_queries": List[str]  # Added for web search functionality
     }
     """
     total_start = time.perf_counter()
@@ -98,7 +99,7 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
     if doc:
         noun_chunks = [
             chunk.lemma_ for chunk in doc.noun_chunks
-            if not chunk.root.is_stop
+                if not chunk.root.is_stop
         ]
 
     # merge everything, keep best YAKE score
@@ -111,7 +112,7 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
             keywords.append({"term": term, "score": score})
 
     # --------------------------------------------------------------
-    # 4. Goal extraction (root verb + direct object + modifiers)
+    # 4. Goal extraction (root verb + direct object+ modifiers)
     # --------------------------------------------------------------
     goals: List[Dict[str, Any]] = []
     if doc:
@@ -132,15 +133,17 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
             "calculate", "compute", "search", "find", "write",
             "explain", "analyze", "generate", "solve", "sing"
         }
+        found = False
         for i, w in enumerate(words):
             if w in action_verbs:
                 goals.append({
                     "action": w,
-                    "object": " ".join(words[i + 1 :]) or "query",
+                    "object": " ".join(words[i + 1:]) or "query",
                     "modifiers": []
                 })
+                found = True
                 break
-        else:
+        if not found:
             goals.append({
                 "action": "answer",
                 "object": "query",
@@ -148,26 +151,62 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
             })
 
     # --------------------------------------------------------------
-    # 5. Finalise result
+    # 5. Generate search queries based on intents and keywords
+    # --------------------------------------------------------------
+    search_queries: List[str] = []
+
+    # Create search queries from intents and keywords
+    if intents and intents != ["No intent found"]:
+        for intent in intents[:3]:  # Limit to top 3 intents
+            search_query = f"{intent} {' '.join([k['term'] for k in keywords[:5]])}"
+            search_queries.append(search_query)
+
+        # Create additional search queries from keywords
+        if keywords:
+            keyword_terms = [k['term'] for k in keywords[:5]]
+            search_queries.append(" ".join(keyword_terms))
+            # Create more specific queries with different combinations
+            if len(keyword_terms) > 1:
+                search_queries.append(" ".join(keyword_terms[:3]))
+
+        # Add original prompt as a fallback search query
+        search_queries.append(prompt)
+
+        # Remove duplicates while preserving order
+        unique_search_queries = []
+        seen_queries = set()
+        for query in search_queries:
+            if query not in seen_queries:
+                seen_queries.add(query)
+                unique_search_queries.append(query)
+
+        # Limit to 5 search queries
+        search_queries = unique_search_queries[:5]
+    else:
+        # If no intents found, create search queries from keywords
+        if keywords:
+            keyword_terms = [k['term'] for k in keywords[:5]]
+            search_queries.append(" ".join(keyword_terms))
+            search_queries.append(prompt)
+        else:
+            search_queries.append(prompt)
+
+    # --------------------------------------------------------------
+    # 6. Finalise result
     # --------------------------------------------------------------
     total_time = (time.perf_counter() - total_start) * 1000
     if debug:
         print(Fore.MAGENTA + f"Total analysis: {total_time:.2f} ms" + Style.RESET_ALL)
 
-    # return {
-    #     "intents": intents or "No intent found",
-    #     "keywords": sorted(keywords, key=lambda x: x["score"]),
-    #     "goals": goals
-    # }
-
-
     return {
-    "message": f"**Intent:** {intents or 'No intent found'}\n"
+        "intents": intents or ["No intent found"],
+        "keywords": sorted(keywords, key=lambda x: x["score"]),
+        "goals": goals,
+        "search_queries": search_queries,  # Added for web search functionality
+        "message": f"**Intent:** {intents or 'No intent found'}\n"
             f"**Keywords:** {', '.join([k['term'] for k in sorted(keywords, key=lambda x: x['score'], reverse=True)])}\n"
             f"**Goals:** {', '.join(map(str, goals)) if goals else 'None'}"
     }
-
-
 
 
 # ------------------------------------------------------------------
@@ -199,8 +238,8 @@ def _pretty_print(result: Dict[str, Any]) -> None:
     # Goals
     print(Fore.YELLOW + "\nGoals:" + Style.RESET_ALL)
     for i, g in enumerate(result["goals"], 1):
-        print(Fore.WHITE + f" {i}. Action: " + Fore.GREEN + g["action"])
-        print(Fore.WHITE + f"    Object : " + Fore.CYAN + (g["object"] or "—"))
+        print(Fore.WHITE + f" {i}. Action: " + Fore.GREEN + str(g["action"]))
+        print(Fore.WHITE + f"    Object : " + Fore.CYAN + (str(g["object"]) or "—"))
         print(Fore.WHITE + f"    Mods   : " + Fore.MAGENTA + (", ".join(g["modifiers"]) if g["modifiers"] else "—"))
         print()
 

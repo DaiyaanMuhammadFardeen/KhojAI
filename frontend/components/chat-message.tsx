@@ -5,36 +5,67 @@ import { useState } from "react"
 
 interface Message {
   id: string
-  role: "user" | "assistant"
+  role: "user" | "assistant" | "USER" | "AI"
   content: string
   timestamp: Date
 }
 
 interface ChatMessageProps {
-  message: Message
+  message?: Message
+  role?: "user" | "assistant" | "USER" | "AI"
+  content?: string
+  timestamp?: Date
+  isLoading?: boolean
 }
 
-export default function ChatMessage({ message }: ChatMessageProps) {
+export default function ChatMessage({ message, role, content, timestamp, isLoading }: ChatMessageProps) {
+  // Handle both ways of passing props
+  const messageRole = message?.role || role || "user"
+  const messageContent = message?.content || content || ""
+  
+  // Normalize role values
+  const normalizedRole = messageRole === "USER" ? "user" : messageRole === "AI" ? "assistant" : messageRole
+
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(message.content)
+    navigator.clipboard.writeText(messageContent)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <div className="flex gap-4 justify-start animate-in fade-in slide-in-from-bottom-2 duration-300 w-full">
+        <div className="flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-xs font-semibold text-white bg-green-600">
+          AI
+        </div>
+        <div className="max-w-[80%] w-fit">
+          <div className="bg-slate-100 dark:bg-slate-800 rounded-lg p-4 text-slate-900 dark:text-slate-100">
+            <div className="flex space-x-2">
+              <div className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"></div>
+              <div className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
-      className={`flex gap-4 ${message.role === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300 w-full`}
+      className={`flex gap-4 ${normalizedRole === "user" ? "justify-end" : "justify-start"} animate-in fade-in slide-in-from-bottom-2 duration-300 w-full`}
     >
       <div
-        className={`flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-xs font-semibold text-white ${message.role === "user" ? "bg-green-600" : "bg-green-600"}`}
+        className={`flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-xs font-semibold text-white ${normalizedRole === "user" ? "bg-green-600" : "bg-green-600"}`}
       >
-        {message.role === "user" ? "You" : "AI"}
+        {normalizedRole === "user" ? "You" : "AI"}
       </div>
 
       <div className="max-w-[80%] w-fit">
-        {message.role === "assistant" ? (
+        {normalizedRole === "assistant" ? (
           <div className="relative bg-slate-100 dark:bg-slate-800 rounded-lg p-4 text-slate-900 dark:text-slate-100">
             <ReactMarkdown
               components={{
@@ -75,7 +106,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
                 a: ({ node, ...props }) => <a className="text-green-600 hover:opacity-80 underline" {...props} />,
               }}
             >
-              {message.content}
+              {messageContent}
             </ReactMarkdown>
             <button
               className="absolute top-3 right-3 text-slate-500 dark:text-slate-400 hover:text-green-600 transition-colors p-1"
@@ -86,7 +117,7 @@ export default function ChatMessage({ message }: ChatMessageProps) {
             </button>
           </div>
         ) : (
-          <p className="bg-green-600 text-white rounded-lg p-4 break-words">{message.content}</p>
+          <p className="bg-green-600 text-white rounded-lg p-4 break-words">{messageContent}</p>
         )}
       </div>
     </div>

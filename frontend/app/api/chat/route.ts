@@ -83,6 +83,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true, // This is important for CORS
+  timeout: 0, // Remove timeout limit for chatbot
 });
 
 // Add a response interceptor to handle errors
@@ -93,6 +94,10 @@ api.interceptors.response.use(
     if (!error.response) {
       console.error('Network error or CORS issue:', error.message);
       console.error('Error details:', error.toJSON ? error.toJSON() : error);
+      // Show user-friendly error message
+      if (error.code === 'NETWORK_ERROR') {
+        console.error('Possible CORS issue. Please check your backend configuration.');
+      }
     }
     return Promise.reject(error);
   }

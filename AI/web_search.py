@@ -8,7 +8,7 @@ from urllib.parse import urljoin, urlparse
 def search_web(query: str, num_results: int = 2) -> List[str]:
     """
     Perform a web search and return top URLs.
-    For now, we'll simulate this with a simple Google search.
+    For now,we'll simulate this with a simple Google search.
     In production, you might want to use a proper search API.
     """
     try:
@@ -77,7 +77,7 @@ def scrape_webpage(url: str, max_content_length: int = 5000) -> Dict[str, str]:
                 # Fallback to body content
                 body = soup.find('body')
                 if body:
-                    content = body.get_text(separator=' ', strip=True)
+                    content = body.get_text(separator='', strip=True)
         
         # Limit content length
         if len(content) > max_content_length:
@@ -98,7 +98,7 @@ def scrape_webpage(url: str, max_content_length: int = 5000) -> Dict[str, str]:
 
 def extract_relevant_information(content: str, keywords: List[str]) -> List[str]:
     """
-    Extract sentences that are relevant to the given keywords.
+Extract sentences that are relevant to the given keywords.
     """
     # Split content into sentences
     sentences = re.split(r'[.!?]+', content)
@@ -116,24 +116,12 @@ def extract_relevant_information(content: str, keywords: List[str]) -> List[str]
         if any(kw in sentence_lower for kw in keywords_lower):
             relevant_sentences.append(sentence)
     
-    return relevant_sentences[:10]  # Return top 10 relevant sentences
+    return relevant_sentences[:10] # Return top 10 relevant sentences
 
 def search_and_extract(query: str, keywords: List[str]) -> List[Dict[str, str]]:
     """
     Perform web search and extract relevant information.
     """
-    urls = search_web(query, num_results=2)
-    information_table = []
-    
-    for url in urls:
-        page_data = scrape_webpage(url)
-        if page_data["content"] != "Failed to scrape content:":
-            relevant_info = extract_relevant_information(page_data["content"], keywords)
-            if relevant_info:
-                information_table.append({
-                    "url": page_data["url"],
-                    "title": page_data["title"],
-                    "relevant_sentences": relevant_info
-                })
-    
-    return information_table
+    #Use the improved search_and_extract from search_utils
+    from search_utils import search_and_extract as improved_search_and_extract
+    return improved_search_and_extract(query, keywords)

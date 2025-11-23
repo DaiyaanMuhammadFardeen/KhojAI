@@ -35,6 +35,9 @@ try:
 except Exception:
     patterns = {}
 
+# Define intents that require web search
+SEARCH_REQUIRED_INTENTS = ["web_search", "question_answering", "explanation", "research"]
+
 # ------------------------------------------------------------
 # Lazy-loaded global references
 # ------------------------------------------------------------
@@ -155,43 +158,76 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
         words = prompt.lower().split()
         action_verbs = {"calculate", "compute", "search", "find", "write",
                         "explain", "analyze", "generate", "solve", "sing"}
-        for i, w in enumerate(words):
-            if w in action_verbs:
-                goals.append({
-                    "action": w,
-                    "object": " ".join(words[i + 1:]) or "query",
-                    "modifiers": []
-                })
-                break
-        if not goals:
+        question_words = {"what", "how", "why", "when", "where", "who", "which"}
+        
+        # Check for question words first
+        if any(word in words for word in question_words):
             goals.append({"action": "answer", "object": "query", "modifiers": []})
+        else:
+            for i, w in enumerate(words):
+                if w in action_verbs:
+                    goals.append({
+                        "action": w,
+                        "object": " ".join(words[i + 1:]) or "query",
+                        "modifiers": []
+                    })
+                    break
+            if not goals:
+                goals.append({"action": "answer", "object": "query", "modifiers": []})
 
     # --------------------------------------------------------------
     # 5. Generate search queries
     # --------------------------------------------------------------
     search_queries = []
-    if intents and intents != ["No intent found"]:
-        for intent in intents[:3]:
-            search_queries.append(f"{intent} {' '.join([k['term'] for k in keywords[:5]])}")
-        keyword_terms = [k["term"] for k in keywords[:5]]
+    # Generate more effective search queries
+    keyword_terms = [k["term"] for k in keywords[:5]]
+    
+    # For question answering, create more targeted queries
+    if "question_answering" in intents:
+        # Create specific queries focused on the key information needed
         if keyword_terms:
-            search_queries.append(" ".join(keyword_terms))
-            if len(keyword_terms) > 1:
-                search_queries.append(" ".join(keyword_terms[:3]))
-        search_queries.append(prompt)
-        # Deduplicate
-        seen_queries = set()
-        unique_queries = []
-        for q in search_queries:
-            if q not in seen_queries:
-                seen_queries.add(q)
-                unique_queries.append(q)
-        search_queries = unique_queries[:5]
+            # Try combinations that are more likely to find specific answers
+            search_queries.append(" ".join(keyword_terms[:3]))  # e.g., "chief advisor bangladesh government"
+            search_queries.append(f"who is {' '.join(keyword_terms[:2])}")  # e.g., "who is chief advisor bangladesh"
+            search_queries.append(f"{keyword_terms[0]} {keyword_terms[2]}")  # e.g., "July Revolution chief advisor"
+            
+        # Add the original question without the "Tell me" part for better search results
+        if prompt.lower().startswith("tell me"):
+            search_queries.append(prompt[8:])  # Remove "Tell me "
+        else:
+            search_queries.append(prompt)
     else:
-        keyword_terms = [k["term"] for k in keywords[:5]]
-        if keyword_terms:
-            search_queries.append(" ".join(keyword_terms))
+        # Add the original prompt as the first query
         search_queries.append(prompt)
+        
+        # Add keyword combinations
+        if keyword_terms:
+            # Add a simple combination of top keywords
+            search_queries.append(" ".join(keyword_terms[:3]))
+            
+            # Add individual important keywords
+            for term in keyword_terms[:3]:
+                if term not in search_queries:
+                    search_queries.append(term)
+        
+        # Add intent-based queries for non-question intents
+        for intent in intents[:2]:
+            if intent != "question_answering" and keyword_terms:  # Skip for question answering
+                intent_query = f"{intent} {' '.join(keyword_terms[:3])}"
+                if len(intent_query) < 100:  # Only add if not too long
+                    search_queries.append(intent_query)
+    
+    # Deduplicate while preserving order and reasonable length
+    seen_queries = set()
+    unique_queries = []
+    for q in search_queries:
+        # Check if query is valid (not empty, not too long)
+        if q and len(q.strip()) > 0 and len(q) < 150:
+            clean_q = q.strip()
+            if clean_q not in seen_queries:
+                seen_queries.add(clean_q)
+                unique_queries.append(clean_q)
+    search_queries = unique_queries[:5]
 
     total_time = (time.perf_counter() - total_start) * 1000
     if debug:

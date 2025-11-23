@@ -23,7 +23,19 @@ public class JwtUtil {
     private Long expiration;
 
     // Generate a secure key
-    private final SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS512);
+    private SecretKey secretKey;
+    
+    // Initialize the secret key after properties are injected
+    @javax.annotation.PostConstruct
+    public void init() {
+        // Use the configured secret if it's long enough, otherwise generate a secure key
+        if (secret != null && secret.getBytes().length >= 32) {
+            this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+        } else {
+            // Generate a secure key for HS256 (256 bits = 32 bytes)
+            this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+        }
+    }
 
     // Retrieve username from jwt token
     public String getUsernameFromToken(String token) {
@@ -59,7 +71,7 @@ public class JwtUtil {
 
     // While creating the token -
     // 1. Define  claims of the token, like Issuer, Expiration, Subject, and the ID
-    // 2. Sign the JWT using the HS512 algorithm and secret key.
+    // 2. Sign the JWT using the HS256 algorithm and secret key.
     // 3. According to JWS Compact Serialization(https://tools.ietf.org/html/draft-ietf-jose-json-web-signature-41#section-3.1)
     // compaction of the JWT to a URL-safe string
     private String doGenerateToken(Map<String, Object> claims, String subject) {
@@ -68,7 +80,7 @@ public class JwtUtil {
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
-                .signWith(secretKey, SignatureAlgorithm.HS512)
+                .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 

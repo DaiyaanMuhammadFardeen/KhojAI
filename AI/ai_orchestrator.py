@@ -10,8 +10,8 @@ def generate_response_with_web_search(prompt: str) -> str:
     
     Process:
     1. Analyze the prompt to extract intents and keywords
-    2. Generate search queries based on the analysis
-    3. Perform web searches and extract relevant information
+    2. Check if the intent requires web search
+    3. If yes, generate search queries and perform web searches
     4. Use an LLM to generate a coherent response based on the extracted information
     """
     
@@ -27,27 +27,46 @@ def generate_response_with_web_search(prompt: str) -> str:
     print(f"Extracted keywords: {[k['term'] for k in keywords]}")
     print(f"Generated search queries: {search_queries}")
     
-    # Step 2: Collect information from web searches
-    all_information = []
-    keyword_terms = [k['term'] for k in keywords]
+    # Define intents that require web search
+    search_intents = ["web_search", "question", "explanation", "research", "question_answering"]
     
-    for query in search_queries[:3]:  # Limit to top 3 search queries
-        print(f"Searching web for: {query}")
-        information = search_and_extract(query, keyword_terms)
-        all_information.extend(information)
-        
-        # Small delay to be respectful to servers
-        time.sleep(0.5)
+    # Check if any of the detected intents require web search
+    # Also trigger search for general question answering
+    needs_search = (any(intent in search_intents for intent in intents) or 
+                   "No intent found" in intents or
+                   any(word in prompt.lower() for word in ["what", "how", "why", "when", "where", "who", "which"]))
     
-    # Remove duplicates based on URL
+    # Step 2: Collect information from web searches only if needed
     unique_information = []
-    seen_urls = set()
-    for info in all_information:
-        if info["url"] not in seen_urls:
-            seen_urls.add(info["url"])
-            unique_information.append(info)
     
-    print(f"Found information from {len(unique_information)} sources")
+    if needs_search and search_queries:
+        all_information = []
+        keyword_terms = [k['term'] for k in keywords]
+        
+        for query in search_queries[:3]:  # Limit to top 3 search queries
+            print(f"Searching web for: {query}")
+            information = search_and_extract(query, keyword_terms)
+            all_information.extend(information)
+            
+            # Small delay to be respectful to servers
+            time.sleep(0.5)
+        
+        # Remove duplicates based on URL
+        seen_urls = set()
+        for info in all_information:
+            if info["url"] not in seen_urls:
+                seen_urls.add(info["url"])
+                unique_information.append(info)
+        
+        print(f"Found information from {len(unique_information)} sources")
+    elif needs_search and not search_queries:
+        # Even if we don't have specific search queries, create a basic one from the prompt
+        print(f"Performing general web search for: {prompt}")
+        information = search_and_extract(prompt, [prompt])
+        unique_information.extend(information)
+        print(f"Found information from {len(unique_information)} sources")
+    else:
+        print(f"Skipping web search for intents: {intents}")
     
     # Step 3: If we found relevant information, use it to generate a response
     if unique_information:
@@ -95,7 +114,7 @@ def generate_coherent_response(prompt: str, context: str) -> str:
         
         # Using ollama as an example - replace with your preferred lightweight LLM
         response = ollama.generate(
-            model="llama2",  # or another lightweight model like "mistral"
+            model="gemma3:1b",  # or another lightweight model like "mistral"
             prompt=prompt_template,
             stream=False
         )
@@ -112,7 +131,7 @@ def generate_fallback_response(prompt: str) -> str:
     """
     try:
         response = ollama.generate(
-            model="llama2",
+            model="gemma3:1b",
             prompt=f"Please answer the following query to the best of your ability: {prompt}",
             stream=False
         )

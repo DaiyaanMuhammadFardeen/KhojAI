@@ -8,6 +8,7 @@ const nextConfig = {
   },
   allowedDevOrigins: [
     'nationally-award-ver-syndication.trycloudflare.com',
+    'holding-exam-brokers-cms.trycloudflare.com',
     'localhost'
   ],
 }

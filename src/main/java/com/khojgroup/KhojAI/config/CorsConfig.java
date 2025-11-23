@@ -15,8 +15,13 @@ public class CorsConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         
-        // Allow requests from all origins (appropriate for development with dynamic domains)
-        config.setAllowedOriginPatterns(List.of("*"));
+        // Allow requests from specific origins including Cloudflare tunnels
+        config.setAllowedOriginPatterns(List.of(
+            "http://localhost:*",
+            "https://localhost:*",
+            "https://*trycloudflare.com",
+            "http://*trycloudflare.com"
+        ));
         
         // Allow credentials
         config.setAllowCredentials(true);

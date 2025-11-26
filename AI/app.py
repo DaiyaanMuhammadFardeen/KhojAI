@@ -4,12 +4,24 @@ import uvicorn
 from prompt_analyzer import analyze_prompt
 from ai_orchestrator import generate_response_with_web_search
 import logging
-
-# Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="AI Prompt Analyzer", version="1.0.0")
+
+# Warm up the model when the application starts
+@app.on_event("startup")
+async def warmup_model():
+    logger.info("Warming up the model...")
+    try:
+        response = ollama.generate(
+            model="gemma3:1b",
+            prompt="hi",
+            stream=False
+        )
+        logger.info("Model warmed up successfully")
+    except Exception as e:
+        logger.error(f"Error warming up model: {str(e)}")
 
 class PromptRequest(BaseModel):
     prompt: str

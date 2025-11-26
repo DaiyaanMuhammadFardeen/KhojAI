@@ -16,7 +16,7 @@ public class AiService {
 
     private final WebClient aiWebClient;  // Injected from config
 
-    public String analyze(String userPrompt) {
+    public String analyzeInternal(String userPrompt) {
         AiRequest request = new AiRequest(userPrompt);
 
         return aiWebClient.post()
@@ -35,6 +35,7 @@ public class AiService {
                 .block(); // sync for now
     }
 
+    // Generate response without exposing internal analysis
     public String generateResponse(String userPrompt) {
         AiRequest request = new AiRequest(userPrompt);
 

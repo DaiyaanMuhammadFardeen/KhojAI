@@ -38,7 +38,7 @@ public class MessageService {
 
         // AUTO AI REPLY
         if ("USER".equals(role)) {
-            String aiReply = aiService.analyze(content);
+            String aiReply = aiService.generateResponse(content);
             Message aiMsg = new Message();
             aiMsg.setRole("AI");
             aiMsg.setContent(aiReply);

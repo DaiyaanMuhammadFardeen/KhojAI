@@ -15,10 +15,11 @@ public class AIController {
 
     private final AiService aiService;
 
+    // Internal endpoint - removed @CrossOrigin to make it internal only
     @PostMapping("/analyze")
     public ResponseEntity<AiResponse> analyzePrompt(@RequestBody AiRequest request) {
         try {
-            String result = aiService.analyze(request.prompt());
+            String result = aiService.analyzeInternal(request.prompt());
             return ResponseEntity.ok(new AiResponse(result));
         } catch (Exception e) {
             return ResponseEntity.internalServerError()

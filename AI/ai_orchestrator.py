@@ -77,8 +77,8 @@ def generate_response_with_web_search(prompt: str) -> str:
         response = generate_coherent_response(prompt, context)
         return response
     else:
-        # Fallback: Use a general LLM response
-        return generate_fallback_response(prompt)
+        # No information found, return a simple response
+        return "I'm sorry, but I couldn't find relevant information to answer your query."
 
 def build_context_from_information(information: List[Dict[str, Any]]) -> str:
     """
@@ -101,17 +101,22 @@ def generate_coherent_response(prompt: str, context: str) -> str:
         # For lightweight models that can run on 8GB VRAM
         # This is a simplified example - you would adjust based on your specific model
         prompt_template = f"""
-        You are a helpful AI assistant. Answer the user's query using the provided context.
-        Be concise but comprehensive, and always cite your sources when possible.
+        Forget any information that you may have stored right now. They are all outdated.
+        Only the below information is uptodate.
+        You are acting as a helpful AI assistant. You will help the user with any questions they may have.
+        Their query is "{prompt}".
         
-        User Query: {prompt}
+        Given that query I have searched  the internet for relevant information.
+        Please use the below information to answer the user's query.
+        If the user's query is not related to the information, respond with 
+        "I'm sorry, but I couldn't find relevant information to answer your query. But here is what I know as of information I've learned till 2023"
         
+        If there is context information below, use the context and the links to generate a beautiful looking markdown response
+        
+        The contexts are sentences scraped from the internet with their links. You will form the response based on these information
         Context Information:
         {context}
-        
-        Please provide a well-structured response:
         """
-        
         # Using ollama as an example - replace with your preferred lightweight LLM
         response = ollama.generate(
             model="gemma3:1b",  # or another lightweight model like "mistral"

@@ -1,0 +1,19 @@
+{
+  "content": "The Physical Activity Guidelines for Americans provides evidence-based guidance to help Americans maintain or improve their health through physical activity. Explore the Guidelines Download the complete second edition of the Physical Activity Guidelines [PDF - 14.2 MB]. For an overview of whats in the second edition, check out the Executive Summary [PDF - 2 MB]. To learn about key messages in the Physical Activity Guidelines, read Top 10 Things to Know. To help promote the Guidelines to other professionals, download our PowerPoint Presentation [PPT - 12.9 MB] [PDF - 2.4 MB]. Promote physical activity in your community ODPHP developed the Move Your Way campaign to share key recommendations from the Physical Activity Guidelines with the public. Use the Move Your Way campaign tools and materials to help spread the word. about the Move Your Way campaign.",
+  "error": null,
+  "hashes": {
+    "content_hash": "cbe8c03fe43a0aa2",
+    "url_hash": "9b5f2c81e25e3b9c"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765213887.2805147,
+    "expires_at": 1765818687.2805147,
+    "fetched_at": 1765213887.2805147,
+    "last_accessed": 1765213887.2805147
+  },
+  "title": "Current Guidelines | odphp.health.gov",
+  "url": "https://odphp.health.gov/our-work/nutrition-physical-activity/physical-activity-guidelines/current-guidelines"
+}

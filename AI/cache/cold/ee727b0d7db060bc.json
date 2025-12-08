@@ -1,0 +1,19 @@
+{
+  "content": "FRT joins forces with CQ Roll Calls Fintech Beat podcast. Fintech Beat Host, Professor Chris Brummer of Georgetown University, and FRT's own, Brad Carr from the IIF, share their key takeaways across IIF's Annual Membership Meeting, the IMF & World Bank annual meetings, and DC's FinTech Week.",
+  "error": null,
+  "hashes": {
+    "content_hash": "ee727b0d7db060bc",
+    "url_hash": "23627603ecadd8ce"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765214878.592146,
+    "expires_at": 1765819678.592146,
+    "fetched_at": 1765214878.592146,
+    "last_accessed": 1765214878.592146
+  },
+  "title": "Publications Filter",
+  "url": "https://www.iif.com/publications/publications-filter?t=Crypto"
+}

@@ -1,0 +1,19 @@
+{
+  "content": "History of Python Last Updated : 04 Oct, 2025 Comments Improve Suggest changes 51 Likes Like Report Python is one of the most popular, high-level, general-purpose programming languages. It was created with a focus on code readability and allows developers to write concepts in fewer lines compared to C++ or Java. Who Invented Python? Creator: Guido van RossumStarted: 1989, at Centrum Wiskunde & Informatica (CWI), NetherlandsFirst Release: 1991Reason: Started as a hobby project during Christmas holidaysPredecessor: Inspired by the ABC language, but Guido improved it by fixing its limitations Why is it called Python? Named after the BBC comedy series Monty Pythons Flying CircusGuido wanted a name that was short, unique, and a little mysteriousHe served as Pythons BDFL (Benevolent Dictator for Life) until 2018Worked at Google and later at Dropbox Evolution of Python When first released, Python already supported:Classes with inheritanceCore data typesException handlingFunctionsKey Versions:Python 2.x Popular for many years, but now outdatedPython 3.x Current standard, actively developedLatest Version: Python 3.12.1 (as of now)Download and Install Python 3 Latest Version Popularity and UsagePython is widely used for:Web developmentScripting and automationSoftware testingData science and machine learningTop companies using Python: Google, Dropbox, Mozilla, IBM, Cisco, Qualcomm, Quora, HPIn 2022, the Anaconda Foundation introduced PyScript, allowing Python code to run directly in the browser (similar to JavaScript).Influence on Other LanguagesPython has inspired many modern languages, such as:RubySwiftGoJuliaGroovyCoffeeScriptECMAScriptOCamlBooCobraRelated Article:Python Tutorial Create Quiz Comment S SohomPramanick Follow 51 Improve S SohomPramanick Follow 51 Improve Article Tags : Python python-basics Explore Python FundamentalsPython Introduction Input and Output in Python Python Variables Python Operators Python Keywords Python Data Types Conditional Statements in Python Loops in Python - For, While and Nested Loops Python Functions Recursion in Python Python Lambda Functions Python Data StructuresPython String Python Lists Python Tuples Python Dictionary Python Sets Python Arrays List Comprehension in Python Advanced PythonPython OOP Concepts Python Exception Handling File Handling in Python Python Database Tutorial Python MongoDB Tutorial Python MySQL Python Packages Python Modules Python DSA Libraries List of Python GUI Library and Packages Data Science with PythonNumPy Tutorial - Python Library Pandas Tutorial Matplotlib Tutorial Python Seaborn Tutorial StatsModel Library - Tutorial Learning Model Building in Scikit-learn TensorFlow Tutorial PyTorch Tutorial Web Development with PythonFlask Tutorial Django Tutorial Learn Django Framework Django ORM - Inserting, Updating & Deleting Data Templating With Jinja2 in Flask Django Templates Build a REST API using Flask - Python Building a Simple API with Django REST Framework Python PracticePython Quiz Python Coding Practice Python Interview Questions and Answers 15+ min read Like.",
+  "error": null,
+  "hashes": {
+    "content_hash": "321a1d17f9edb671",
+    "url_hash": "5aaa919a4335741b"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765040388.450715,
+    "expires_at": 1765645188.450715,
+    "fetched_at": 1765040388.450715,
+    "last_accessed": 1765040388.450715
+  },
+  "title": "History of Python - GeeksforGeeks",
+  "url": "https://www.geeksforgeeks.org/python/history-of-python/"
+}

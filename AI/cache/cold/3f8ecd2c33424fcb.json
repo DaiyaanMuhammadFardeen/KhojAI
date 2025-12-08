@@ -1,0 +1,24 @@
+{
+  "content": "This is a test page content for caching system",
+  "fetch_success": true,
+  "hashes": {
+    "content_hash": "3f8ecd2c33424fcb",
+    "url_hash": "b64b434c9331e2b8"
+  },
+  "metadata": {
+    "author": "Test Author",
+    "tags": [
+      "test",
+      "cache"
+    ]
+  },
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765038832.1996014,
+    "expires_at": 1765643632.1996014,
+    "fetched_at": 1765038832.1996014,
+    "last_accessed": 1765038832.1996014
+  },
+  "title": "Test Page",
+  "url": "https://example.com/test"
+}

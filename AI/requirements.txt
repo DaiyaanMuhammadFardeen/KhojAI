@@ -1,0 +1,27 @@
+# Core dependencies for the KhojAI project
+fastapi>=0.68.0
+uvicorn>=0.15.0
+requests>=2.25.0
+python-dotenv>=0.19.0
+rank-bm25>=0.2.2
+colorama>=0.4.6
+torch>=2.0.0
+numpy>=1.24.0
+aiofiles>=0.8.0
+orjson>=3.6.0
+xxhash>=2.0.0
+ollama>=0.1.7
+
+# NLTK dependencies
+nltk>=3.8.1
+
+# spaCy dependencies
+spacy>=3.7.0
+en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.0/en_core_web_sm-3.7.0-py3-none-any.whl
+
+# YAKE dependencies
+yake>=0.4.8
+
+# Development and testing dependencies
+pytest>=7.0.0
+httpx>=0.23.0

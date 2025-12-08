@@ -1,132 +1,260 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { Menu, Send, Plus } from "lucide-react"
-import { MessageAPI, AIApi, CreateMessageRequest, ConversationAPI } from '@/app/api/chat/route'
-import ChatMessage from "@/components/chat-message"
-import styles from '@/styles/components/chat-interface.module.scss'
+import { useState, useRef, useEffect } from "react";
+import { Send, Plus, Menu } from "lucide-react";
+import styles from "@/styles/components/chat-interface.module.scss";
+import ChatMessage from "./chat-message";
+import SearchProgress from "./search-progress";
+import { MessageAPI, AIApi, ConversationAPI } from "../app/api/chat/route";
+import { CreateMessageRequest, MessageDTO } from "../types";
 
 interface ChatInterfaceProps {
-  onMenuClick: () => void
-  chatId: string | null
+  chatId: string | null;
+  onMenuClick: () => void;
 }
 
-interface Message {
-  id: string
-  role: 'USER' | 'AI'
-  content: string
-  sentAt: Date
-}
+function ChatInterface({ chatId, onMenuClick }: ChatInterfaceProps) {
+  const [inputValue, setInputValue] = useState("");
+  const [messages, setMessages] = useState<MessageDTO[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [streamData, setStreamData] = useState<any[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const streamingMessageIdRef = useRef<string | null>(null);
+  const finalResponseRef = useRef<string>("");
 
-export default function ChatInterface({ onMenuClick, chatId }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [inputValue, setInputValue] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  // Load messages when chatId changes
   useEffect(() => {
-    if (chatId) {
-      loadMessages(chatId)
-    } else {
-      setMessages([])
-    }
-  }, [chatId])
+    const loadMessages = async () => {
+      if (!chatId) {
+        setMessages([]);
+        return;
+      }
 
-  // Scroll to bottom of messages
+      try {
+        const response = await ConversationAPI.get(chatId);
+        setMessages(response.data.messages || []);
+      } catch (error) {
+        console.error("Failed to load messages:", error);
+        setMessages([]);
+      }
+    };
+
+    loadMessages();
+  }, [chatId]);
+
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
-  const loadMessages = async (id: string) => {
-    try {
-      const response = await ConversationAPI.get(id)
-      const loadedMessages = response.data.messages.map(msg => ({
-        ...msg,
-        sentAt: new Date(msg.sentAt)
-      }))
-      setMessages(loadedMessages)
-    } catch (error) {
-      console.error("Failed to load messages:", error)
-    }
-  }
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, streamData]);
 
   const handleSend = async () => {
-    if (!inputValue.trim() || !chatId || isLoading) return
+    if (!inputValue.trim() || !chatId || isLoading) return;
+
+    const userPrompt = inputValue.trim();
+    setInputValue("");
+    setIsLoading(true);
+    finalResponseRef.current = ""; // Reset final response
+    
+    // Add user message
+    const userMessage: MessageDTO = {
+      id: `user-${Date.now()}`,
+      role: "USER",
+      content: userPrompt,
+      sentAt: new Date().toISOString(),
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Save user message to backend (async, don't block)
+    const userMessageRequest: CreateMessageRequest = {
+      convId: chatId,
+      role: 'USER',
+      content: userPrompt
+    };
+    
+    MessageAPI.create(userMessageRequest)
+      .then(response => {
+        const savedMessage = response.data.messages[response.data.messages.length - 1];
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.id === userMessage.id ? { ...msg, id: savedMessage.id } : msg
+          )
+        );
+      })
+      .catch(error => console.error("Failed to save user message:", error));
+    
+    // Create AI message placeholder
+    const aiMessageId = `ai-${Date.now()}`;
+    streamingMessageIdRef.current = aiMessageId;
+    
+    const aiMessage: MessageDTO = {
+      id: aiMessageId,
+      role: "AI",
+      content: " Initializing search...",
+      sentAt: new Date().toISOString(),
+    };
+    
+    setMessages(prev => [...prev, aiMessage]);
+    setStreamData([]); // Reset stream data
 
     try {
-      setIsLoading(true)
-      
-      // Add user message to UI immediately
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        role: 'USER',
-        content: inputValue,
-        sentAt: new Date()
-      }
-      
-      setMessages(prev => [...prev, userMessage])
-      setInputValue("")
-
-      // Send user message to backend
-      const userMessageRequest: CreateMessageRequest = {
-        convId: chatId,
-        role: 'USER',
-        content: inputValue.trim()
-      }
-      
-      const userResponse = await MessageAPI.create(userMessageRequest)
-      
-      // Update user message with real ID
-      setMessages(prev => prev.map(msg => 
-        msg.id === userMessage.id 
-          ? { ...msg, id: userResponse.data.messages[userResponse.data.messages.length - 2].id } 
-          : msg
-      ))
-
-      // Get AI response
-      const aiResponse = await AIApi.generateResponse({ prompt: inputValue.trim() })
-      
-      // Add AI message to UI
-      const aiMessage: Message = {
-        id: Date.now().toString(),
-        role: 'AI',
-        content: aiResponse.data.message,
-        sentAt: new Date()
-      }
-      
-      setMessages(prev => [...prev, aiMessage])
-      
-      // Send AI message to backend
-      const aiMessageRequest: CreateMessageRequest = {
-        convId: chatId,
-        role: 'AI',
-        content: aiResponse.data.message
-      }
-      
-      const aiResponseBackend = await MessageAPI.create(aiMessageRequest)
-      
-      // Update AI message with real ID
-      setMessages(prev => prev.map(msg => 
-        msg.id === aiMessage.id 
-          ? { ...msg, id: aiResponseBackend.data.messages[aiResponseBackend.data.messages.length - 1].id } 
-          : msg
-      ))
+      await AIApi.streamSearch(
+        { prompt: userPrompt },
+        (parsed) => {
+          // Add to stream data for progress component
+          setStreamData(prev => [...prev, parsed]);
+          
+          // Update AI message based on event type
+          let statusMessage = "";
+          
+          switch (parsed.type) {
+            case 'analysis':
+              statusMessage = parsed.status === 'started' 
+                ? " Analyzing your query..." 
+                : " Analysis complete";
+              break;
+              
+            case 'search':
+              if (parsed.status === 'started') {
+                statusMessage = ` Searching the web for "${parsed.query}"...`;
+              } else if (parsed.status === 'completed') {
+                statusMessage = ` Found ${parsed.results_count} results for "${parsed.query}"`;
+              }
+              break;
+              
+            case 'urls_found':
+              statusMessage = ` Found ${parsed.count} URLs for query: "${parsed.query}"`;
+              break;
+              
+            case 'scraping':
+              if (parsed.status === 'started') {
+                statusMessage = ` Scraping: ${parsed.url}`;
+              } else if (parsed.status === 'completed') {
+                statusMessage = ` Scraped: ${parsed.title}`;
+              }
+              break;
+              
+            case 'scraping_error':
+              statusMessage = ` Error scraping: ${parsed.url} - ${parsed.error}`;
+              break;
+              
+            case 'extracting':
+              if (parsed.status === 'started') {
+                statusMessage = ` Extracting relevant information from: ${parsed.url}`;
+              } else if (parsed.status === 'completed') {
+                statusMessage = ` Extracted ${parsed.sentences_count} relevant sentences`;
+              }
+              break;
+              
+            case 'search_result':
+              statusMessage = ` Processed result: ${parsed.title}`;
+              break;
+              
+            case 'deduplication':
+              statusMessage = ` Removed ${parsed.original_count - parsed.final_count} duplicate results`;
+              break;
+              
+            case 'response_generation':
+              if (parsed.status === 'started') {
+                statusMessage = " Generating response...";
+              } else if (parsed.status === 'completed') {
+                statusMessage = " Response generated";
+              }
+              break;
+              
+            case 'skip_search':
+              statusMessage = ` Skipping search: ${parsed.reason}`;
+              break;
+              
+            case 'final_response':
+              finalResponseRef.current = parsed.message;
+              statusMessage = parsed.message;
+              break;
+              
+            case 'done':
+              // Stream complete - this is handled by the onComplete callback
+              return;
+              
+            case 'error':
+              statusMessage = ` Error: ${parsed.message || 'Unknown error'}`;
+              break;
+              
+            default:
+              console.log("Unknown event type:", parsed.type);
+              return;
+          }
+          
+          // Only update the message if we haven't received the final response yet
+          if (parsed.type !== 'final_response' && finalResponseRef.current === "") {
+            // Update the AI message with the latest status
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === streamingMessageIdRef.current 
+                  ? { ...msg, content: statusMessage } 
+                  : msg
+              )
+            );
+          }
+        },
+        () => {
+          // onComplete callback
+          console.log("Stream completed successfully");
+          
+          // Save final AI message to backend
+          if (finalResponseRef.current && chatId) {
+            const aiMessageRequest: CreateMessageRequest = {
+              convId: chatId,
+              role: 'AI',
+              content: finalResponseRef.current
+            };
+            
+            MessageAPI.create(aiMessageRequest)
+              .then(response => {
+                const savedMessage = response.data.messages[response.data.messages.length - 1];
+                setMessages(prev => 
+                  prev.map(msg => 
+                    msg.id === streamingMessageIdRef.current 
+                      ? { ...msg, id: savedMessage.id, content: finalResponseRef.current } 
+                      : msg
+                  )
+                );
+              })
+              .catch(error => console.error("Failed to save AI message:", error));
+          }
+          
+          streamingMessageIdRef.current = null;
+          setIsLoading(false);
+        },
+        (error) => {
+          // onError callback
+          console.error("Streaming error:", error);
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === streamingMessageIdRef.current 
+                ? { ...msg, content: ` Error: ${error.message || 'Connection failed'}` } 
+                : msg
+            )
+          );
+          streamingMessageIdRef.current = null;
+          setIsLoading(false);
+        }
+      );
     } catch (error) {
-      console.error("Failed to send message:", error)
-    } finally {
-      setIsLoading(false)
+      console.error("Failed to send message:", error);
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === streamingMessageIdRef.current 
+            ? { ...msg, content: ` Error: ${error instanceof Error ? error.message : 'Unknown error'}` } 
+            : msg
+        )
+      );
+      streamingMessageIdRef.current = null;
+      setIsLoading(false);
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
+      e.preventDefault();
+      handleSend();
     }
   }
 
@@ -147,8 +275,7 @@ export default function ChatInterface({ onMenuClick, chatId }: ChatInterfaceProp
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button 
-          className={styles.menuButton}
+        <button className={styles.menuButton}
           onClick={onMenuClick}
         >
           <Menu size={20} />
@@ -165,13 +292,8 @@ export default function ChatInterface({ onMenuClick, chatId }: ChatInterfaceProp
             timestamp={message.sentAt}
           />
         ))}
-        {isLoading && (
-          <ChatMessage
-            role="AI"
-            content=""
-            timestamp={new Date()}
-            isLoading={true}
-          />
+        {isLoading && streamData.length > 0 && (
+          <SearchProgress streamData={streamData} />
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -199,3 +321,5 @@ export default function ChatInterface({ onMenuClick, chatId }: ChatInterfaceProp
     </div>
   )
 }
+
+export default ChatInterface;

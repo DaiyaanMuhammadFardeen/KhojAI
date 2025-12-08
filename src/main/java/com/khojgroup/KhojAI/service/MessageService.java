@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +39,7 @@ public class MessageService {
 
         // AUTO AI REPLY
         if ("USER".equals(role)) {
+            // Only send the latest user message for analysis to avoid keyword dilution
             String aiReply = aiService.generateResponse(content);
             Message aiMsg = new Message();
             aiMsg.setRole("AI");

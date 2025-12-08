@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-time Search Streaming Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        #output {
+            border: 1px solid #ddd;
+            padding: 15px;
+            height: 500px;
+            overflow-y: auto;
+            background-color: #ffffff;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .event {
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            word-wrap: break-word;
+        }
+        .analysis {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        .search {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+        }
+        .scraping {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+        }
+        .extracting {
+            background-color: #f3e5f5;
+            border-left: 4px solid #9c27b0;
+        }
+        .result {
+            background-color: #e1f5fe;
+            border-left: 4px solid #00bcd4;
+        }
+        .response {
+            background-color: #fff8e1;
+            border-left: 4px solid #ffc107;
+        }
+        .error {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+        }
+        .done {
+            background-color: #e0f2f1;
+            border-left: 4px solid #009688;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-bottom: 4px;
+        }
+        .event-type {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .event-data {
+            white-space: pre-wrap;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #3498db;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Real-time Search Streaming Test</h1>
+    
+    <div class="controls">
+        <button id="startBtn">Start Real-time Search</button>
+        <button id="clearBtn">Clear Output</button>
+    </div>
+    
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-value" id="eventCount">0</div>
+            <div class="stat-label">Events</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="urlCount">0</div>
+            <div class="stat-label">URLs Processed</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="resultCount">0</div>
+            <div class="stat-label">Results Found</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="status">Idle</div>
+            <div class="stat-label">Status</div>
+        </div>
+    </div>
+    
+    <div id="output"></div>
+
+    <script>
+        let eventCount = 0;
+        let urlCount = 0;
+        let resultCount = 0;
+        let startTime = null;
+
+        document.getElementById('startBtn').addEventListener('click', startSearch);
+        document.getElementById('clearBtn').addEventListener('click', clearOutput);
+
+        async function startSearch() {
+            const startBtn = document.getElementById('startBtn');
+            const output = document.getElementById('output');
+            
+            // Reset counters
+            eventCount = 0;
+            urlCount = 0;
+            resultCount = 0;
+            startTime = Date.now();
+            
+            updateStats();
+            
+            startBtn.disabled = true;
+            startBtn.textContent = 'Searching...';
+            
+            addToOutput('🚀 Starting real-time search...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/v1/ai/stream-search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        prompt: 'What are the latest developments in artificial intelligence and quantum computing?' 
+                    }),
+                });
+
+                if (!response.body) {
+                    throw new Error('ReadableStream not supported');
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) {
+                        addToOutput('✅ Stream complete', 'done');
+                        updateStats();
+                        break;
+                    }
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n\n');
+                    
+                    lines.forEach(line => {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.substring(6));
+                                handleEventData(data);
+                            } catch (e) {
+                                console.error('Error parsing JSON:', e);
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                addToOutput(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                startBtn.disabled = false;
+                startBtn.textContent = 'Start Real-time Search';
+                document.getElementById('status').textContent = 'Complete';
+            }
+        }
+
+        function handleEventData(data) {
+            eventCount++;
+            updateStats();
+            
+            const timestamp = new Date().toLocaleTimeString();
+            
+            switch (data.type) {
+                case 'analysis':
+                    if (data.status === 'started') {
+                        addToOutput(`🔍 Analyzing prompt: ${data.message}`, 'analysis', timestamp);
+                        document.getElementById('status').textContent = 'Analyzing';
+                    } else if (data.status === 'completed') {
+                        addToOutput(`✅ Analysis completed`, 'analysis', timestamp);
+                        if (data.search_queries) {
+                            addToOutput(`   Generated ${data.search_queries.length} search queries:`, 'analysis', '');
+                            data.search_queries.forEach(query => {
+                                addToOutput(`   • "${query}"`, 'analysis', '');
+                            });
+                        }
+                    }
+                    break;
+                    
+                case 'search':
+                    if (data.status === 'started') {
+                        addToOutput(`🔎 Searching web for: "${data.query}"`, 'search', timestamp);
+                        document.getElementById('status').textContent = 'Searching';
+                    } else if (data.status === 'completed') {
+                        addToOutput(`   ✅ Found ${data.results_count} results`, 'search', '');
+                    }
+                    break;
+                    
+                case 'urls_found':
+                    addToOutput(`   🌐 Discovered ${data.count} URLs for query`, 'search', '');
+                    break;
+                    
+                case 'scraping':
+                    if (data.status === 'started') {
+                        urlCount++;
+                        updateStats();
+                        addToOutput(`📥 Scraping: ${shortenUrl(data.url)}`, 'scraping', timestamp);
+                        document.getElementById('status').textContent = 'Scraping';
+                    } else if (data.status === 'completed') {
+                        addToOutput(`   ✅ Scraped: ${data.title || 'Unknown title'}`, 'scraping', '');
+                    }
+                    break;
+                    
+                case 'scraping_error':
+                    addToOutput(`❌ Error scraping ${shortenUrl(data.url)}: ${data.error}`, 'error', timestamp);
+                    break;
+                    
+                case 'extracting':
+                    if (data.status === 'started') {
+                        addToOutput(`🔍 Extracting information from: ${shortenUrl(data.url)}`, 'extracting', timestamp);
+                        document.getElementById('status').textContent = 'Extracting';
+                    } else if (data.status === 'completed') {
+                        addToOutput(`   ✅ Extracted ${data.sentences_count} relevant sentences`, 'extracting', '');
+                    }
+                    break;
+                    
+                case 'search_result':
+                    resultCount++;
+                    updateStats();
+                    addToOutput(`📄 Result: ${data.title} (${data.sentences_count} sentences)`, 'result', timestamp);
+                    break;
+                    
+                case 'deduplication':
+                    addToOutput(`🧹 Deduplication: ${data.original_count} → ${data.final_count} results`, 'result', timestamp);
+                    break;
+                    
+                case 'response_generation':
+                    if (data.status === 'started') {
+                        addToOutput(`🧠 Generating final response...`, 'response', timestamp);
+                        document.getElementById('status').textContent = 'Generating';
+                    } else if (data.status === 'completed') {
+                        addToOutput(`   ✅ Response generated`, 'response', '');
+                    }
+                    break;
+                    
+                case 'final_response':
+                    addToOutput(`🤖 Final AI Response:`, 'response', timestamp);
+                    addToOutput(data.message, 'response', '');
+                    break;
+                    
+                case 'done':
+                    const totalTime = Date.now() - startTime;
+                    addToOutput(`🏁 Search completed in ${totalTime}ms`, 'done', timestamp);
+                    document.getElementById('status').textContent = 'Complete';
+                    break;
+                    
+                default:
+                    addToOutput(`📦 ${JSON.stringify(data)}`, 'info', timestamp);
+            }
+        }
+
+        function addToOutput(message, type, timestamp) {
+            const output = document.getElementById('output');
+            const eventDiv = document.createElement('div');
+            eventDiv.className = `event ${type}`;
+            
+            if (timestamp) {
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'timestamp';
+                timeDiv.textContent = `[${timestamp}]`;
+                eventDiv.appendChild(timeDiv);
+            }
+            
+            const typeDiv = document.createElement('div');
+            typeDiv.className = 'event-type';
+            typeDiv.textContent = type.toUpperCase();
+            eventDiv.appendChild(typeDiv);
+            
+            const dataDiv = document.createElement('div');
+            dataDiv.className = 'event-data';
+            dataDiv.textContent = message;
+            eventDiv.appendChild(dataDiv);
+            
+            output.appendChild(eventDiv);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function updateStats() {
+            document.getElementById('eventCount').textContent = eventCount;
+            document.getElementById('urlCount').textContent = urlCount;
+            document.getElementById('resultCount').textContent = resultCount;
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '';
+            eventCount = 0;
+            urlCount = 0;
+            resultCount = 0;
+            updateStats();
+            document.getElementById('status').textContent = 'Idle';
+        }
+
+        function shortenUrl(url) {
+            if (url.length <= 60) return url;
+            return url.substr(0, 57) + '...';
+        }
+    </script>
+</body>
+</html>

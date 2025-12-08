@@ -176,6 +176,7 @@ patterns = {
             "transcribe", "transmute", "alter", "modify", "rewrite",
             "rescript", "dub", "subtitle", "localize", "internationalize"
         ]}}, {"LOWER": {"IN": ["to", "into", "from"]}}, {"POS": "NOUN"}],
+        [{"LOWER": {"IN": ["translate", "convert", "interpret"]}}, {"LOWER": {"IN": ["to", "into", "from"]}}],
         [{"LOWER": "what"}, {"LOWER": "does"}, {"LOWER": "this"}, {"LOWER": "mean"}],
         [{"LOWER": "translate"}, {"LOWER": "text"}],
         [{"LOWER": "change"}, {"LOWER": "language"}],

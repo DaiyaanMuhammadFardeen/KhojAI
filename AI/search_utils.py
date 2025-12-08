@@ -1,291 +1,337 @@
-#search_utils.py
-import requests
-from bs4 import BeautifulSoup
-from ddgs import DDGS
-from typing import List, Dict
-import time
 import re
-import random
-from urllib.robotparser import RobotFileParser
-from urllib.parse import urljoin
-import difflib
-import warnings
+from typing import List, Tuple, Dict
+from rank_bm25 import BM25Okapi
 
-# Configuration flagto disableGoogle scraping (it's brittle and legally risky)
-ALLOW_GOOGLE_SCRAPE = False  # Set to True only for dev/testing
+# Initialize NLTK with proper error handling
+NLTK_READY = False
+wordnet = None
+word_tokenize = None
+stopwords = None
 
-# Import configuration from prompt_analyzer
 try:
-    from prompt_analyzer import SEARCH_ENGINE, MAX_SEARCH_QUERIES, MAX_SEARCH_RESULTS
-except ImportError:
-    # Default values if not available
-    SEARCH_ENGINE = "duckduckgo"
-    MAX_SEARCH_QUERIES = 3
-    MAX_SEARCH_RESULTS = 5  # Increased from 3 to 5
+    import nltk
 
-def extract_relevant_information(content: str, keywords: List[str]) -> List[str]:
-    """
-    Extract sentences that are relevant to the givenkeywords.
-"""
-    # RemoveHTML tags
-    content = re.sub(r'<[^>]*>', ' ', content)
-    # Normalize multiple whitespaces, newlines, etc., to single spaces
-    content = re.sub(r'\s+', ' ', content).strip()
-    
-    # Split content into sentences
-    # Better split: Handles sentences endingwith .!? followed by space, avoiding abbreviations like Mr./Dr.
-    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|\!)\s', content)
-    
-    print(f"Split content into {len(sentences)} sentences.")
-    
-    relevant_sentences = []
-    keywords_lower = [kw.lower() for kw in keywords]
-    
-    # Optional: For whole-word matching, use word boundaries (e.g., \bkey\b to avoid matching "monkey")
-    # But keep substring for broader results; toggle if needed
-    whole_word= False  # Set to True for stricter matching
-    if whole_word:
-        keyword_patterns = [re.compile(r'\b' + re.escape(kw) + r'\b') for kw in keywords_lower]
-    
-    for sentence in sentences:
-        sentence = sentence.strip()
-        if len(sentence) < 5: # Allow shorter sentences, like web snippets or titles
-            continue
-            
-        # Check if sentence contains any keywords
-        sentence_lower = sentence.lower()
-        if whole_word:
-            if any(pattern.search(sentence_lower) for pattern in keyword_patterns):
-                relevant_sentences.append(sentence)
-        else:
-            if any(kw in sentence_lower for kw in keywords_lower):
-                relevant_sentences.append(sentence)
-    
-    # Sort by number of keyword matches (descending)
-    relevant_sentences.sort(key=lambda s: sum(1 for kw in keywords_lower if kw in s.lower()), reverse=True)
-    print(f"Found {len(relevant_sentences)} relevant sentences outof {len(sentences)} total.")
-    return relevant_sentences[:10]  # Return top 10 relevant sentences
-
-def search_web(query: str, num_results: int = 3, engine: str = SEARCH_ENGINE) -> List[str]:
-    """Flexible search: DuckDuckGo primary, Google fallback."""
-    if engine == "duckduckgo":
-        try:
-            #Use context manager to ensure proper resource handling
-            with DDGS(timeout=30) as ddgs:  # Increased timeout to 30 seconds
-                results = ddgs.text(query, max_results=num_results)
-                urls = [r["href"] for r in results if r.get("href") and r["href"].startswith("http")]
-                if not urls:
-                    raise ValueError("No results returned from DuckDuckGo")  # Force fallback or log
-                time.sleep(random.uniform(0.5, 1.5))  # Shorter sleep, only on success
-                return urls
-        except Exception as e:
-            print(f"[DDG Error] {e}")
-            return search_web(query, num_results,engine="google_scrape")  # Fallback
-    
-    elif engine == "google_scrape":
-        if not ALLOW_GOOGLE_SCRAPE:
-            print("[Google] Scraping disabled via config")
-            return []
-        try:
-            # Enhanced scraping with better evasion
-            user_agents = [
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Mozilla/5.0 (X11;Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            ]
-            headers = {'User-Agent': random.choice(user_agents)}
-            search_url =f"https://www.google.com/search?q={query.replace(' ', '+')}&num={num_results}"
-            response = requests.get(search_url, headers=headers, timeout=30)  # Increased timeout to 30 seconds
-            
-            # Check robots.txt compliance - Fixed robots URL
-            rp = RobotFileParser()
-            rp.set_url("https://www.google.com/robots.txt")
-            rp.read()
-            if not rp.can_fetch(headers['User-Agent'], "/search"):
-                raise ValueError("Blocked by robots.txt")
-            
-            # Update parser for modern Google HTML
-            soup = BeautifulSoup(response.text, 'html.parser')
-            links = []
-            for result in soup.select('div.tF2Cxc a')[:num_results]:  # Better selector
-                href = result.get('href')
-                if href and href.startswith('http'):
-                    links.append(href)
-            return links
-        except Exception as e:
-            print(f"[Google Error] {e}")
-            return []
-
-def scrape_webpage(url: str, max_content_length: int = 5000) -> Dict[str, str]:
-    """Scrape content from a webpage with robots.txt compliance."""
+    # Download required data first
+    print("📦 Checking NLTK data...")
+    nltk.download('wordnet', quiet=True)
+    nltk.download('omw-1.4', quiet=True)
+    nltk.download('punkt', quiet=True)
+    nltk.download('stopwords', quiet=True)
     try:
-        # Check robots.txt compliance
-        rp = RobotFileParser()
-        rp.set_url(urljoin(url,'/robots.txt'))
-        rp.read()
-        # Fixed invalid User-Agent - now using actual header User-Agent
-        if not rp.can_fetch(requests.utils.default_headers()['User-Agent'], url):
-            return {"url": url, "title": "Blocked", "content": "Disallowed by robots.txt"}
-            
-        user_agents =[
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        ]
-        headers = {'User-Agent': random.choice(user_agents)}
-        response= requests.get(url, headers=headers, timeout=30)  # Increased timeout to 30 seconds
-        response.raise_for_status()
-        
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # Remove script and style elements
-        for script in soup(["script", "style"]):
-            script.decompose()
-        
-        # Gettitle
-        title = soup.title.string if soup.title else "No title"
-        
-        # Get main content
-        # Try to find main content area
-        content_areas = soup.find_all(['main', 'article', 'div', 'p'])
-        content = ""
-        
-        # Prioritize main/article tags, thendivs, then paragraphs
-        main_content = soup.find('main') or soup.find('article')
-        if main_content:
-            content = main_content.get_text(separator=' ', strip=True)
-        else:
-            # Try to get content from divs with common content classes
-            content_divs = soup.find_all('div', class_=re.compile(r'content|main|article|post', re.I))
-            if content_divs:
-                content = content_divs[0].get_text(separator=' ', strip=True)
-            else:
-                # Fallback to body content
-                body = soup.find('body')
-                if body:
-                    content = body.get_text(separator=' ', strip=True)
-        
-        # Limit content length
-        if len(content) > max_content_length:
-            content = content[:max_content_length] + "..."
-        
-        return {
-            "url": url,
-            "title": title.strip(),
-            "content": content.strip()
-}
+        nltk.download('punkt_tab', quiet=True)  # For newer NLTK versions
+    except:
+        pass
+
+    # Now import after downloads
+    from nltk.corpus import wordnet
+    from nltk.tokenize import word_tokenize
+    from nltk.corpus import stopwords
+
+    # Test if it works
+    wordnet.synsets('test')
+    word_tokenize('test')
+    stopwords.words('english')
+
+    NLTK_READY = True
+    print("✅ NLTK initialized successfully")
+
+except Exception as e:
+    print(f"⚠️  NLTK not available: {e}")
+    print("   Falling back to basic tokenization")
+    NLTK_READY = False
+
+# Optional: Load spaCy only if available
+SPACY_AVAILABLE = False
+nlp = None
+try:
+    import spacy
+
+    nlp = spacy.load("en_core_web_sm")
+    SPACY_AVAILABLE = True
+    print("✅ spaCy loaded successfully")
+except (ImportError, OSError):
+    print("⚠️  spaCy not available")
+
+
+def expand_keywords_wordnet(keywords: List[str], max_synonyms: int = 2) -> List[str]:
+    """
+    Expand keywords using WordNet synonyms.
+    Falls back to original keywords if NLTK unavailable.
+    """
+    if not NLTK_READY or wordnet is None:
+        return keywords
+
+    expanded = set(kw.lower() for kw in keywords)
+
+    try:
+        for keyword in keywords:
+            synonym_count = 0
+            for syn in wordnet.synsets(keyword.lower()):
+                if synonym_count >= max_synonyms:
+                    break
+
+                for lemma in syn.lemmas():
+                    lemma_name = lemma.name().replace('_', ' ').lower()
+
+                    if lemma_name != keyword.lower() and len(lemma_name.split()) <= 2:
+                        expanded.add(lemma_name)
+                        synonym_count += 1
+
+                        if synonym_count >= max_synonyms:
+                            break
     except Exception as e:
-        print(f"Error scraping {url}: {e}")
-        return {
-            "url": url,
-            "title": "Error",
-            "content": f"Failed to scrape content: {str(e)}"
+        print(f"⚠️  WordNet expansion failed: {e}")
+        return keywords
+
+    expanded_list = list(expanded)
+    if len(expanded_list) > len(keywords):
+        print(f"📝 Expanded {len(keywords)} keywords to {len(expanded_list)} terms")
+    return expanded_list
+
+
+def extract_entities_from_keywords(keywords: List[str]) -> List[str]:
+    """
+    Extract named entities and key terms from keywords using spaCy NER.
+    Falls back to original keywords if spaCy unavailable.
+    """
+    if not SPACY_AVAILABLE or nlp is None:
+        return keywords
+
+    try:
+        text = " ".join(keywords)
+        doc = nlp(text)
+
+        entities = [ent.text.lower() for ent in doc.ents]
+        key_terms = [token.lemma_.lower() for token in doc
+                     if token.pos_ in ['NOUN', 'PROPN', 'VERB']
+                     and not token.is_stop
+                     and len(token.text) > 2]
+
+        all_terms = list(set(entities + key_terms + [kw.lower() for kw in keywords]))
+        print(f"🔍 Extracted {len(all_terms)} key terms using NER")
+        return all_terms
+    except Exception as e:
+        print(f"⚠️  NER extraction failed: {e}")
+        return keywords
+
+
+def split_sentences(content: str) -> List[str]:
+    """Split content into sentences."""
+    content = re.sub(r'<[^>]*>', ' ', content)
+    content = re.sub(r'\s+', ' ', content).strip()
+
+    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?|\!)\s', content)
+    return [s.strip() for s in sentences if len(s.strip()) >= 5]
+
+
+def tokenize_text(text: str, remove_stopwords_flag: bool = True) -> List[str]:
+    """
+    Tokenize text and optionally remove stopwords.
+    Falls back to simple split if NLTK unavailable.
+    """
+    if not NLTK_READY or word_tokenize is None:
+        # Fallback: simple tokenization
+        tokens = re.findall(r'\b\w+\b', text.lower())
+        if remove_stopwords_flag:
+            # Basic stopwords
+            basic_stopwords = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+                               'of', 'with', 'is', 'are', 'was', 'were', 'be', 'been', 'being'}
+            tokens = [t for t in tokens if t not in basic_stopwords]
+        return tokens
+
+    try:
+        tokens = word_tokenize(text.lower())
+
+        if remove_stopwords_flag:
+            stop_words = set(stopwords.words('english'))
+            tokens = [t for t in tokens if t.isalnum() and t not in stop_words]
+        else:
+            tokens = [t for t in tokens if t.isalnum()]
+
+        return tokens
+    except Exception as e:
+        print(f"⚠️  Tokenization failed, using fallback: {e}")
+        tokens = re.findall(r'\b\w+\b', text.lower())
+        return tokens
+
+
+def calculate_entity_overlap(sentence: str, keywords: List[str]) -> int:
+    """
+    Calculate overlap between sentence entities and keyword entities.
+    Returns 0 if spaCy unavailable.
+    """
+    if not SPACY_AVAILABLE or nlp is None:
+        return 0
+
+    try:
+        sent_doc = nlp(sentence)
+        keyword_doc = nlp(" ".join(keywords))
+
+        sent_entities = {ent.text.lower() for ent in sent_doc.ents}
+        keyword_entities = {ent.text.lower() for ent in keyword_doc.ents}
+
+        return len(sent_entities.intersection(keyword_entities))
+    except Exception as e:
+        return 0
+
+
+def extract_relevant_information(
+        content: str,
+        keywords: List[str],
+        top_n: int = 10,
+        use_expansion: bool = True,
+        use_ner: bool = True,
+        expansion_weight: float = 0.5,
+        bm25_weight: float = 1.0,
+        keyword_weight: float = 2.0,
+        entity_weight: float = 1.5
+) -> List[Tuple[str, float, Dict]]:
+    """
+    Extract most relevant sentences using BM25, WordNet expansion, and optional NER.
+
+    Args:
+        content: Full text content
+        keywords: Original search keywords
+        top_n: Number of top sentences to return
+        use_expansion: Whether to use WordNet keyword expansion (requires NLTK)
+        use_ner: Whether to use Named Entity Recognition (requires spaCy)
+        expansion_weight: Weight for expanded keywords (0-1)
+        bm25_weight: Weight for BM25 score
+        keyword_weight: Weight for original keyword matches
+        entity_weight: Weight for entity matches
+
+    Returns:
+        List of (sentence, score, metadata) tuples
+    """
+    # Split content into sentences
+    sentences = split_sentences(content)
+    print(f"📄 Split content into {len(sentences)} sentences")
+
+    if not sentences:
+        return []
+
+    # Prepare keywords
+    original_keywords_set = set(kw.lower() for kw in keywords)
+    expanded_keywords = keywords.copy()
+
+    # Expand keywords using WordNet
+    if use_expansion and NLTK_READY:
+        expanded_keywords = expand_keywords_wordnet(keywords, max_synonyms=2)
+    elif use_expansion and not NLTK_READY:
+        print("⚠️  Keyword expansion skipped (NLTK not available)")
+
+    # Extract entities from keywords using NER
+    key_terms = keywords
+    if use_ner and SPACY_AVAILABLE:
+        key_terms = extract_entities_from_keywords(keywords)
+    elif use_ner and not SPACY_AVAILABLE:
+        print("⚠️  NER skipped (spaCy not available)")
+
+    # Tokenize sentences for BM25
+    tokenized_sentences = [tokenize_text(sent) for sent in sentences]
+
+    # Combine all search terms
+    all_search_terms = list(set(
+        [kw.lower() for kw in keywords] +
+        [kw.lower() for kw in expanded_keywords] +
+        [term.lower() for term in key_terms]
+    ))
+    tokenized_query = tokenize_text(" ".join(all_search_terms))
+
+    print(f"🔎 Searching with {len(tokenized_query)} query terms")
+
+    # Calculate BM25 scores
+    try:
+        bm25 = BM25Okapi(tokenized_sentences)
+        bm25_scores = bm25.get_scores(tokenized_query)
+    except Exception as e:
+        print(f"⚠️  BM25 scoring failed: {e}")
+        return []
+
+    # Calculate combined scores
+    results = []
+    for i, (sentence, bm25_score) in enumerate(zip(sentences, bm25_scores)):
+        sentence_lower = sentence.lower()
+
+        # Count original keyword matches
+        original_matches = sum(1 for kw in original_keywords_set if kw in sentence_lower)
+
+        # Count expanded keyword matches
+        expanded_matches = sum(
+            1 for kw in expanded_keywords
+            if kw.lower() not in original_keywords_set and kw.lower() in sentence_lower
+        )
+
+        # Calculate entity overlap
+        entity_overlap = 0
+        if use_ner and SPACY_AVAILABLE:
+            entity_overlap = calculate_entity_overlap(sentence, keywords)
+
+        # Combine scores
+        final_score = (
+                bm25_score * bm25_weight +
+                original_matches * keyword_weight +
+                expanded_matches * expansion_weight +
+                entity_overlap * entity_weight
+        )
+
+        metadata = {
+            'bm25_score': round(bm25_score, 3),
+            'original_matches': original_matches,
+            'expanded_matches': expanded_matches,
+            'entity_overlap': entity_overlap,
+            'sentence_length': len(sentence.split())
         }
 
-def search_and_extract(query: str, keywords: List[str]) -> List[Dict[str, str]]:
-    """
-    Perform web search and extract relevant information.
-    """
-    urls = search_web(query, num_results=MAX_SEARCH_RESULTS)  # Using configurable constant
-    
-    # Deduplicate URLs
-    seen = set()
-    urls = [u for u in urls if u not in seen and not seen.add(u)]
-    
-    print(f"Found {len(urls)} unique URLs after deduplication.")
-    
-    information_table = []
-    
-    # Process only top 5 URLs max to avoid timeouts
-    for url in urls[:5]:
-        try:
-            page_data = scrape_webpage(url)
-            print(f"Scraped {url}: Content length = {len(page_data.get('content', '')) if 'content' in page_data else 'No content key'}")
-            
-            if not isinstance(page_data, dict) or "url" not in page_data or "title" not in page_data or "content" not in page_data:
-                print(f"Invalid page_data format for {url}. Skipping.")
-                continue
-            if not page_data["content"] or len(page_data["content"]) < 100:  # Arbitrary threshold for minimal content
-                print(f"Empty or too short content for {url}. Skipping.")
-                continue
-                
-            if"content" not in page_data:
-                print(f"Warning: No 'content' key in page_data for {url}")
-                continue  # Add this to skip if no content
-            
-            if "Failed" not in page_data["content"] and "Blocked" not in page_data["content"]:
-                relevant_info =extract_relevant_information(page_data["content"], keywords)
-                print(f"Extracted {len(relevant_info)} relevant sentences for {url}")
-                if relevant_info:
-                    information_table.append({
-                        "url": page_data["url"], 
-                        "title": page_data["title"],
-                        "relevant_sentences": relevant_info[:10]  # Increased from 5 to 10
-                    })
-        except Exception as e:
-            print(f"Error processing {url}: {str(e)}")
-            continue
-            
-        time.sleep(random.uniform(1.0, 2.0))  # Increased sleep to avoid blocks
-    return information_table
+        results.append((sentence, final_score, metadata))
 
+    # Sort and filter
+    results.sort(key=lambda x: x[1], reverse=True)
+    filtered_results = [(s, score, meta) for s, score, meta in results if score > 0]
 
-def main():
-    """
-    Test all functions in this module with simple examples.
-    """
-    print("=" * 60)
-    print("Testing search_utils.py functions")
-    print("=" * 60)
-    
-    # Test 1: extract_relevant_information
-    print("\n1. Testing extract_relevant_information function:")
-    sample_content = "Python is a high-level programming language. It is widely used for web development. " \
-                     "Machine learning is a subset of artificial intelligence. Python is great for machine learning."
-    keywords = ["Python", "programming"]
-    relevant_sentences = extract_relevant_information(sample_content, keywords)
-    print(f"   Content: {sample_content}")
-    print(f"   Keywords: {keywords}")
-    print(f"   Relevant sentences found: {len(relevant_sentences)}")
-    for i, sentence in enumerate(relevant_sentences, 1):
-        print(f"     {i}. {sentence}")
-    
-   # Test 2: search_web
-    print("\n2. Testing search_web function:")
-    try:
-        urls = search_web("Python programming", num_results=2, engine="duckduckgo")
-        print(f"   Found {len(urls)} URLs:")
-        for i, url in enumerate(urls, 1):
-            print(f"     {i}. {url}")
-    except Exception as e:
-        print(f"   Error: {e}")
-    
-    # Test 3: scrape_webpage
-    print("\n3. Testing scrape_webpage function:")
-    try:
-        page_data = scrape_webpage("https://httpbin.org/html")
-        print(f"   Title: {page_data.get('title', 'N/A')}")
-        print(f"   URL: {page_data.get('url', 'N/A')}")
-        content_preview = page_data.get('content', 'N/A')[:100] + "..." if len(page_data.get('content', '')) > 100 else page_data.get('content', 'N/A')
-        print(f"   Content preview: {content_preview}")
-    except Exception as e:
-        print(f"   Error: {e}")
-    # Test 4: search_and_extract
-    print("\n4. Testing search_and_extract function:")
-    try:
-        results = search_and_extract("Python programming", ["Python", "programming"])
-        print(f"   Found information from {len(results)} sources:")
-        for i, result in enumerate(results[:2], 1): # Limit to 2 results for brevity
-            print(f"     {i}. Title: {result.get('title', 'N/A')}")
-            print(f"        URL: {result.get('url', 'N/A')}")
-            print(f"        Relevant sentences: {len(result.get('relevant_sentences', []))}")
-    except Exception as e:
-        print(f"   Error: {e}")
-    
-    print("\n" + "=" * 60)
-    print("Finished testing search_utils.py functions")
-    print("=" * 60)
+    print(f"✅ Found {len(filtered_results)} relevant sentences (returning top {top_n})")
 
-
+    return filtered_results[:top_n]
+# Example usage
 if __name__ == "__main__":
-    main()
+    content = """
+    Apple Inc. released the iPhone 15 in September 2023. The device features an advanced camera system.
+    The new model has improved battery life compared to previous versions.
+    Tim Cook, CEO of Apple, announced the product at a special event in Cupertino, California.
+    The smartphone includes the latest A17 Pro chip for enhanced performance.
+    Microsoft is also competing in the mobile market with Surface devices.
+    The iPhone 15 Pro Max offers the best camera capabilities in the lineup.
+    Android phones from Samsung continue to be popular alternatives.
+    The new iPhone supports USB-C charging, replacing the Lightning port.
+    Photography enthusiasts praise the improved low-light performance of the camera.
+    Apple's ecosystem integration makes the iPhone attractive to existing Mac users.
+    """
+
+    keywords = ["iPhone 15", "camera", "features"]
+
+    print("\n" + "=" * 80)
+    print("TESTING RELEVANCE EXTRACTION")
+    print("=" * 80)
+    print(f"NLTK Ready: {NLTK_READY}")
+    print(f"spaCy Available: {SPACY_AVAILABLE}")
+    print("=" * 80)
+
+    # Try full-featured version
+    print("\n📊 FULL-FEATURED VERSION")
+    print("-" * 80)
+
+    results = extract_relevant_information(
+        content,
+        keywords,
+        top_n=5,
+        use_expansion=True,
+        use_ner=True
+    )
+
+    for i, (sentence, score, metadata) in enumerate(results, 1):
+        print(f"\n{i}. [Score: {score:.2f}]")
+        print(f"   {sentence[:100]}...")
+        print(f"   📊 BM25={metadata['bm25_score']}, "
+              f"Keywords={metadata['original_matches']}, "
+              f"Expanded={metadata['expanded_matches']}, "
+              f"Entities={metadata['entity_overlap']}")

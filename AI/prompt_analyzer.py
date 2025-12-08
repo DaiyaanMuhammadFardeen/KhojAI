@@ -8,6 +8,9 @@
 # • Optional debug / timing utilities
 # ------------------------------------------------------------
 
+# NOTE: This is now the LEGACY analyzer. The new hybrid analyzer is in prompt_analyzer_llm.py
+# This file is maintained for backward compatibility and as fallback option.
+
 import torch
 import time
 from typing import List, Dict, Any
@@ -36,7 +39,7 @@ except Exception:
     patterns = {}
 
 # Define intents that require web search
-SEARCH_REQUIRED_INTENTS = ["web_search", "question_answering", "explanation", "research"]
+SEARCH_REQUIRED_INTENTS = ["web_search", "question_answering", "explanation", "research", "translation"]
 
 # ------------------------------------------------------------
 # Lazy-loaded global references
@@ -73,7 +76,7 @@ def get_kw_extractor():
     return _kw_extractor
 
 
-# Optional background warm-up (won’t block startup)
+# Optional background warm-up (won't block startup)
 def warm_up():
     try:
         get_spacy_pipeline()
@@ -103,11 +106,17 @@ def _time_step(label: str, func, *args, **kwargs):
 # ------------------------------------------------------------
 # Core analysis function
 # ------------------------------------------------------------
-def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
+def analyze_legacy(prompt: str, debug: bool = False) -> Dict[str, Any]:
+    """Legacy spaCy/YAKE-based analyzer."""
     total_start = time.perf_counter()
     if debug:
-        _debug(f"Analysing: '{prompt}'", Fore.MAGENTA)
+        _debug(f"Analysing (legacy): '{prompt}'", Fore.MAGENTA)
 
+    # Clean the prompt to remove conversation prefixes like "USER: " or "AI: "
+    cleaned_prompt = prompt
+    if prompt.startswith("USER: ") or prompt.startswith("AI: "):
+        cleaned_prompt = prompt.split(": ", 1)[1] if ": " in prompt else prompt
+    
     nlp, matcher = get_spacy_pipeline()
     kw_extractor = get_kw_extractor()
 
@@ -115,7 +124,7 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
     # 1. spaCy parsing
     # --------------------------------------------------------------
     try:
-        doc = _time_step("spaCy processing", nlp, prompt.lower())
+        doc = _time_step("spaCy processing", nlp, cleaned_prompt.lower())
     except Exception as e:
         if debug:
             print(Fore.RED + f"[ERROR] spaCy failed: {e}" + Style.RESET_ALL)
@@ -128,9 +137,9 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
     intents = list({nlp.vocab.strings[mid] for mid, _, _ in matches}) or ["No intent found"]
 
     # --------------------------------------------------------------
-    # 3. Keyword extraction
+    # 3. Keyword extraction (only from the cleaned prompt)
     # --------------------------------------------------------------
-    yake_kws = _time_step("YAKE extraction", kw_extractor.extract_keywords, prompt)
+    yake_kws = _time_step("YAKE extraction", kw_extractor.extract_keywords, cleaned_prompt)
     noun_chunks = [chunk.lemma_ for chunk in doc.noun_chunks if not chunk.root.is_stop]
     seen = set()
     keywords = []
@@ -155,7 +164,7 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
                 "modifiers": mods
             })
     if not goals:  # fallback
-        words = prompt.lower().split()
+        words = cleaned_prompt.lower().split()
         action_verbs = {"calculate", "compute", "search", "find", "write",
                         "explain", "analyze", "generate", "solve", "sing"}
         question_words = {"what", "how", "why", "when", "where", "who", "which"}
@@ -176,7 +185,7 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
                 goals.append({"action": "answer", "object": "query", "modifiers": []})
 
     # --------------------------------------------------------------
-    # 5. Generate search queries
+    # 5. Generate search queries (based only on the cleaned prompt)
     # --------------------------------------------------------------
     search_queries = []
     # Generate more effective search queries
@@ -192,13 +201,22 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
             search_queries.append(f"{keyword_terms[0]} {keyword_terms[2]}")  # e.g., "July Revolution chief advisor"
             
         # Add the original question without the "Tell me" part for better search results
-        if prompt.lower().startswith("tell me"):
-            search_queries.append(prompt[8:])  # Remove "Tell me "
+        if cleaned_prompt.lower().startswith("tell me"):
+            search_queries.append(cleaned_prompt[8:])  # Remove "Tell me "
         else:
-            search_queries.append(prompt)
+            search_queries.append(cleaned_prompt)
+    elif "translation" in intents:
+        # For translation tasks, focus on language pairs and context
+        if keyword_terms:
+            search_queries.append(" ".join(keyword_terms[:3]))
+            search_queries.append(f"translate {' '.join(keyword_terms[:3])}")
+            search_queries.append(f"meaning {' '.join(keyword_terms[:2])}")
+            
+        # Add the original prompt
+        search_queries.append(cleaned_prompt)
     else:
         # Add the original prompt as the first query
-        search_queries.append(prompt)
+        search_queries.append(cleaned_prompt)
         
         # Add keyword combinations
         if keyword_terms:
@@ -212,7 +230,7 @@ def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
         
         # Add intent-based queries for non-question intents
         for intent in intents[:2]:
-            if intent != "question_answering" and keyword_terms:  # Skip for question answering
+            if intent not in ["question_answering", "translation"] and keyword_terms:  # Skip for question answering and translation
                 intent_query = f"{intent} {' '.join(keyword_terms[:3])}"
                 if len(intent_query) < 100:  # Only add if not too long
                     search_queries.append(intent_query)
@@ -275,6 +293,51 @@ def _pretty_print(result: Dict[str, Any]) -> None:
 
     print(Fore.CYAN + "=" * 60 + "\n" + Style.RESET_ALL)
 
+
+# ------------------------------------------------------------
+# Public API function
+# ------------------------------------------------------------
+def analyze_prompt(prompt: str, debug: bool = False) -> Dict[str, Any]:
+    """Public API function - now uses hybrid analyzer with fallback to legacy."""
+    try:
+        # Try to import and use the new hybrid analyzer
+        from prompt_analyzer_llm import analyze_prompt as hybrid_analyze_prompt
+        import asyncio
+        
+        # Check if we're already in an async context
+        try:
+            # Try to get the running event loop
+            loop = asyncio.get_running_loop()
+            # If we're in an async context, we can't use run_until_complete directly
+            # Instead, we'll create a separate thread to run the async function
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(asyncio.run, hybrid_analyze_prompt(prompt, debug))
+                return future.result()
+        except RuntimeError:
+            # No event loop running, create a new one
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            return loop.run_until_complete(hybrid_analyze_prompt(prompt, debug))
+    except Exception as e:
+        # Fallback to legacy analyzer
+        if debug:
+            print(Fore.RED + f"[WARN] Hybrid analyzer failed, falling back to legacy: {e}" + Style.RESET_ALL)
+        return analyze_legacy(prompt, debug)
+
+
+async def analyze_prompt_async(prompt: str, debug: bool = False) -> Dict[str, Any]:
+    """Async version of analyze_prompt for use in async contexts."""
+    try:
+        # Try to import and use the new hybrid analyzer
+        from prompt_analyzer_llm import analyze_prompt as hybrid_analyze_prompt
+        # Since we're already in an async context, we can directly await the async function
+        return await hybrid_analyze_prompt(prompt, debug)
+    except Exception as e:
+        # Fallback to legacy analyzer
+        if debug:
+            print(Fore.RED + f"[WARN] Hybrid analyzer failed, falling back to legacy: {e}" + Style.RESET_ALL)
+        return analyze_legacy(prompt, debug)
 
 # ------------------------------------------------------------
 # CLI entry-point

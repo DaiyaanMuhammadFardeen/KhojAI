@@ -1,0 +1,19 @@
+{
+  "content": "JavaScript is disabled in your browser. Please enable JavaScript to proceed. A required part of this site couldnt load. This may be due to a browser extension, network issues, or browser settings. Please check your connection, disable any ad blockers, or try using a different browser.",
+  "error": null,
+  "hashes": {
+    "content_hash": "97023b8f96a423ea",
+    "url_hash": "b9dcfd3c4bc99fb0"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765383061.6966138,
+    "expires_at": 1765987861.6966138,
+    "fetched_at": 1765383061.6966138,
+    "last_accessed": 1765383061.6966138
+  },
+  "title": "Client Challenge",
+  "url": "https://assassinscreed.fandom.com/wiki/Assassin%27s_Creed:_Shadows"
+}

@@ -1,0 +1,19 @@
+{
+  "content": "Researchers who developed a new mobile application that uses artificial intelligence to accurately diagnose crop diseases in the field have won a $100,000 award to help expand their project to help millions of small-scale farmers across Africa. Cassava brown streak disease is spreading westward across the African continent and, together with cassava mosaic disease, threatens the food and income security of more than 30 million farmers in East and Central Africa. Likewise, banana is threatened by fungal and bacterial diseases, including the devastating banana bunchy top virus, while late blight still plagues potato farmers. Farmers often are unable to identify these diseases properly, while researchers, plant-health authorities and extension organizations lack the data to support them. To stop the spread of these diseases, a team under the CGIAR Research Program on Roots, Tubers and Bananas (RTB) has developed a revolutionary app to accurately diagnose diseases in the field, which will be combined with SMS services to send alerts to thousands of rural farmers. CGIAR (Consultative Group on International Agricultural Research) is a global research partnership dedicated to reducing poverty, enhancing food and nutrition security, and improving natural resources and ecosystem services. \"Smartphones are becoming more and more common in rural Africa,\" explained James Legg of the International Institute of Tropical Agriculture (IITA), who leads the project with David Hughes, associate professor of entomology and biology, Penn State. \"Smallholders or extension officers with a basic smartphone with a camera will be able to download the app for free, fire it up, point it at a leaf with disease symptoms and get an instant diagnosis. That is truly revolutionary!\" The app also will provide the latest management advice for all major diseases and pests of root, tuber and banana crops and will pinpoint the location of the nearest agricultural extension support for farmers. The team's $100,000 grant is part of the CGIAR Platform for Big Data in Agriculture \"Inspire Challenges\" program. The award was announced Sept. 21 at the Big Data in Agriculture Convention 2017 in Cali, Colombia. Although the app currently is developed for cassava, the grant will allow researchers to expand the tool for use with other root, tuber and banana crops that are critical sources of food, nutrition and income security for millions. \"This prize is transformative. It allows us to expand across multiple sites in Africa and multiple crops that are critical for food security on the continent,\" said Penn State's Hughes, who has appointments in the College of Agricultural Sciences and the Eberly College of Science. \"We can amplify by 100 times what we have achieved so far.\" Painstaking field work using cameras, spectrophotometers and drones at RTB cassava field sites in coastal Tanzania and on farms in western Kenya generated more than 200,000 images of diseased crops to train artificial intelligence (AI) algorithms. Using many of these images, Hughes, Legg and collaborators developed an AI algorithm that can automatically classify five cassava diseases, and by collaborating with Google, the team was able to develop the smartphone app with TensorFlow. It is currently being field-tested in Tanzania.",
+  "error": null,
+  "hashes": {
+    "content_hash": "8d64f365a2915634",
+    "url_hash": "2229869749f1d7e3"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765364371.8815122,
+    "expires_at": 1765969171.8815122,
+    "fetched_at": 1765364371.8815122,
+    "last_accessed": 1765364371.8815122
+  },
+  "title": "New mobile app diagnoses crop diseases in the field and alerts rural farmers | Penn State University",
+  "url": "https://www.psu.edu/news/research/story/new-mobile-app-diagnoses-crop-diseases-field-and-alerts-rural-farmers"
+}

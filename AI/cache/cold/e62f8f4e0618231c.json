@@ -1,0 +1,19 @@
+{
+  "content": "The Latest Research and Development into the Antibody-Drug Conjugate, [fam-] Trastuzumab Deruxtecan (DS-8201a), for HER2 Cancer Therapy - PMID: 30827997 - DOI: 10.1248/cpb.c18-00744 The Latest Research and Development into the Antibody-Drug Conjugate, [fam-] Trastuzumab Deruxtecan (DS-8201a), for HER2 Cancer Therapy Abstract A major limitation of traditional chemotherapy for cancer is dose-limiting toxicity, caused by the exposure of non-tumor cells to cytotoxic agents. Use of molecular targeted drugs, such as specific kinase inhibitors and monoclonal antibodies, is a possible solution to overcome this limitation and has achieved clinical success so far. Use of an antibody-drug conjugate (ADC) is a rational strategy for improving efficacy and reducing systemic adverse events. ADCs use antibodies selectively to deliver a potent cytotoxic agent to tumor cells, thus drastically improving the therapeutic index of chemotherapeutic agents. Lessons learned from clinical failure of early ADCs during the 1980s to 90s have recently led to improvements in ADC technology, and resulted in the approval of four novel ADCs. Nonetheless, further advances in ADC technology are still required to streamline their clinical efficacy and reduce toxicity. [fam-] Trastuzumab deruxtecan (DS-8201a) is a next-generation ADC that satisfies these requirements based on currently available evidence. DS-8201a has several innovative features; a highly potent novel payload with a high drug-to-antibody ratio, good homogeneity, a tumor-selective cleavable linker, stable linker-payload in circulation, and a short systemic half-life cytotoxic agent in vivo; the released cytotoxic payload could exert a bystander effect. With respect to its preclinical profiles, DS-8201a could provide a valuable therapy with a great potential against HER2-expressing cancers in clinical settings. In a phase I trial, DS-8201a showed acceptable safety profiles with potential therapeutic efficacy, with the wide therapeutic index. Keywords: antibodydrug conjugate; antitumor; drug delivery. Publication types MeSH terms Substances LinkOut - more resources Full Text Sources Other Literature Sources Research Materials Miscellaneous.",
+  "error": null,
+  "hashes": {
+    "content_hash": "e62f8f4e0618231c",
+    "url_hash": "e9c80f46657e88e7"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765374796.1160614,
+    "expires_at": 1765979596.1160614,
+    "fetched_at": 1765374796.1160614,
+    "last_accessed": 1765374796.1160614
+  },
+  "title": "The Latest Research and Development into the Antibody-Drug Conjugate, [fam-] Trastuzumab Deruxtecan (DS-8201a), for HER2 Cancer Therapy - PubMed",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/30827997/"
+}

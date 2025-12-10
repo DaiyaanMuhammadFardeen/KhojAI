@@ -1,0 +1,19 @@
+{
+  "content": "Defining Artificial Intelligence Artificial intelligence refers to computer systems that can perform complex tasks normally done by human-reasoning, decision making, creating, etc. There is no single, simple definition of artificial intelligence because AI tools are capable of a wide range of tasks and outputs, but NASA follows the definition of AI found within EO 13960, which references Section 238(g) of the National Defense Authorization Act of 2019. - Any artificial system that performs tasks under varying and unpredictable circumstances without significant human oversight, or that can learn from experience and improve performance when exposed to data sets. - An artificial system developed in computer software, physical hardware, or other context that solves tasks requiring human-like perception, cognition, planning, learning, communication, or physical action. - An artificial system designed to think or act like a human, including cognitive architectures and neural networks. - A set of techniques, including machine learning that is designed to approximate a cognitive task. - An artificial system designed to act rationally, including an intelligent software agent or embodied robot that achieves goals using perception, planning, reasoning, learning, communicating, decision-making, and acting. How Artificial Intelligence, Machine Learning, and Deep Learning Fit Together Artificial Intelligence and Machine Learning (ML): AI tools used at NASA sometimes use machine learning, which uses data and algorithms to train computers to make classifications, generate predictions, or uncover similarities or trends across large datasets. Some common methods used at NASA include: Decision Support Complex processes require tools to consider imperfect or unknown situations. This method of artificial intelligence considers multiple outcomes and probabilities to inform decisions. Deep learning A subset of machine learning that involves neural networks with many layers. It distinguishes itself from other forms of neural networks primarily through its capability to learn features automatically from data. Natural language processing A subset of machine learning that trains computers to understand, interpret, and manipulate human language. Neural networks A method to train computers to process data in a way thats inspired by the human brain, using a layered, interconnected neuron-inspired structure.",
+  "error": null,
+  "hashes": {
+    "content_hash": "080d6931998b875a",
+    "url_hash": "98a0a1eb1f2eeed8"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765304151.7998044,
+    "expires_at": 1765908951.7998044,
+    "fetched_at": 1765304151.7998044,
+    "last_accessed": 1765304151.7998044
+  },
+  "title": "What is Artificial Intelligence? - NASA",
+  "url": "https://www.nasa.gov/what-is-artificial-intelligence/"
+}

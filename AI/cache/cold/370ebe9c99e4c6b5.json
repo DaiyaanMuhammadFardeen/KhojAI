@@ -1,0 +1,19 @@
+{
+  "content": "Samsung R&D Institute Bangladesh (SRBD) started its journey in February 2011. Located in the heart of Dhaka, it is the first ever R&D hub set up by a multinational company in Bangladesh. SRBD is an integral part of a worldwide network of R&D centers set up by Samsung Electronics, with the aim of becoming a major contributor to the Galaxy Ecosystem through application and service development for Mobile/Tablets, Wearables, and PCs. At SRBD, we focus on delivering rich Multi Device Experience by leveraging our multi-OS and multi-platform expertise. We also specialize in commercializing to market while delivering high quality products and services. We actively work with our partners and stakeholders to expand the Samsung business for B2B and local markets. SRBD takes pride in developing and nurturing a culture of teamwork, innovation, and continuous improvement through skill development and training.",
+  "error": null,
+  "hashes": {
+    "content_hash": "370ebe9c99e4c6b5",
+    "url_hash": "22ea0a727e11fc58"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765374805.5711584,
+    "expires_at": 1765979605.5711584,
+    "fetched_at": 1765374805.5711584,
+    "last_accessed": 1765374805.5711584
+  },
+  "title": "SR Bangladesh | Samsung Research",
+  "url": "https://research.samsung.com/srbd"
+}

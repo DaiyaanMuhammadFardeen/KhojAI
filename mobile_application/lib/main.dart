@@ -42,8 +42,28 @@ void main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isDarkMode = SettingsService().getDarkMode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen for theme changes
+    SettingsService.themeChangeStream.listen((isDarkMode) {
+      if (mounted) {
+        setState(() {
+          _isDarkMode = isDarkMode;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +85,14 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.deepPurple,
+              brightness: Brightness.dark,
+            ),
+          ),
+          themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
           home: const HomeScreen(),
           builder: (context, child) {
             return Builder(

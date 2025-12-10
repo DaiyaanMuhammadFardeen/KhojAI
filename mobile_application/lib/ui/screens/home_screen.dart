@@ -1,9 +1,12 @@
-import'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import './chat_screen.dart';
 import './settings_screen.dart';
 import '../widgets/error_boundary.dart';
+import '../widgets/skeleton_loader.dart';
+import '../widgets/new_conversation_button.dart';
 import '../../state/cubits/conversation_cubit.dart';
+import '../../services/settings_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-appBar: AppBar(
+      appBar: AppBar(
         title: const Text('Khoj AI'),
         actions: [
           IconButton(
@@ -36,7 +39,7 @@ appBar: AppBar(
           ),
         ],
       ),
-body: ErrorBoundary(
+      body: ErrorBoundary(
         context: 'HomeScreen',
         child: BlocConsumer<ConversationCubit, ConversationState>(
           listener: (context, state) {
@@ -46,7 +49,7 @@ body: ErrorBoundary(
                 if (context.mounted) {
                   Navigator.push(
                     context,
-                   MaterialPageRoute(
+                    MaterialPageRoute(
                       builder: (context) => ChatScreen(conversation: state.conversation),
                     ),
                   );
@@ -59,7 +62,7 @@ body: ErrorBoundary(
               if (state is ConversationsLoaded) {
                 if (state.conversations.isEmpty) {
                   return Center(
-child: Column(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(Icons.chat, size: 64, color: Colors.grey),
@@ -71,7 +74,7 @@ child: Column(
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () {
-try{
+                            try {
                               print(
                                 '[HomeScreen] Creating new conversation...',
                               );
@@ -97,7 +100,7 @@ try{
                 return ListView.builder(
                   itemCount: state.conversations.length,
                   itemBuilder: (context, index) {
-                   try {
+                    try {
                       final conversation = state.conversations[index];
                       if (conversation == null) {
                         print(
@@ -108,7 +111,7 @@ try{
                       return Card(
                         margin: const EdgeInsets.symmetric(
                           horizontal: 8,
-                          vertical:4,
+                          vertical: 4,
                         ),
                         child: ListTile(
                           title: Text(conversation.title ?? 'Untitled'),
@@ -118,7 +121,7 @@ try{
                           onTap: () {
                             try {
                               print(
-                                '[HomeScreen] Tapped conversation:ID=${conversation.id}',
+                                '[HomeScreen] Tapped conversation: ID=${conversation.id}',
                               );
 
                               if (conversation.id != null &&
@@ -131,7 +134,7 @@ try{
                                   ),
                                 );
                               } else {
-                                print('[HomeScreen] ERROR:Invalid ID');
+                                print('[HomeScreen] ERROR: Invalid ID');
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
@@ -167,7 +170,7 @@ try{
                         ),
                       );
                     } catch (e) {
-print('[HomeScreen] ERROR in itemBuilder: $e');
+                      print('[HomeScreen] ERROR in itemBuilder: $e');
                       return Container(
                         padding: const EdgeInsets.all(16),
                         child: Text(
@@ -179,7 +182,42 @@ print('[HomeScreen] ERROR in itemBuilder: $e');
                   },
                 );
               } else if (state is ConversationsLoading) {
-                return const Center(child: CircularProgressIndicator());
+                return ListView.builder(
+                  itemCount: 8, // Show 8 skeleton loaders
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
+                      child: Row(
+                        children: [
+                          const CircleAvatar(
+                            radius: 20,
+                            child: Icon(Icons.chat_bubble_outline),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SkeletonLoader.rounded(
+                                  height: 16,
+                                  width: 150,
+                                ),
+                                const SizedBox(height: 8),
+                                SkeletonLoader.rounded(
+                                  height: 12,
+                                  width: 100,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
               } else if (state is ConversationError) {
                 return Center(
                   child: Padding(
@@ -217,7 +255,7 @@ print('[HomeScreen] ERROR in itemBuilder: $e');
                       const Icon(Icons.error, size: 64, color: Colors.red),
                       const SizedBox(height: 16),
                       Text('Unexpected error: $e'),
-const SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () {
                           context.read<ConversationCubit>().loadConversations();
@@ -232,9 +270,9 @@ const SizedBox(height: 16),
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-       onPressed: () {
-try {
+      floatingActionButton: NewConversationButton(
+        onPressed: () {
+          try {
             print('[HomeScreen] FAB pressed');
             context.read<ConversationCubit>().createConversation(
               'New Conversation',
@@ -242,13 +280,12 @@ try {
           } catch (e) {
             print('[HomeScreen] FAB Exception: $e');
             if (mounted) {
-              ScaffoldMessenger.of(
-                context,
-).showSnackBar(SnackBar(content: Text('Error: $e')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error: $e'))
+              );
             }
           }
         },
-        child: const Icon(Icons.chat),
       ),
     );
   }

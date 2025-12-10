@@ -75,4 +75,23 @@ public class AiService {
         
         return responseBuilder.toString();
     }
+
+    public String generateResponse(String userPrompt) {
+        AiRequest request = new AiRequest(userPrompt);
+
+        return aiWebClient.post()
+                .uri("/generate-response")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(request)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, resp ->
+                        resp.bodyToMono(String.class)
+                                .flatMap(body -> Mono.error(new RuntimeException("AI Client Error: " + body))))
+                .onStatus(HttpStatusCode::is5xxServerError, resp ->
+                        resp.bodyToMono(String.class)
+                                .flatMap(body -> Mono.error(new RuntimeException("AI Server Error: " + body))))
+                .bodyToMono(AiResponse.class)
+                .map(AiResponse::message)
+                .block(); // sync for now
+    }
 }

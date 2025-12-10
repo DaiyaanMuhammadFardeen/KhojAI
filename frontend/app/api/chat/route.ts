@@ -117,6 +117,35 @@ export const handleLogout = () => {
   delete api.defaults.headers.Authorization;
 };
 
+/** Handle user logout */
+export const handleLogout = () => {
+  // Clear all user-related data from localStorage
+  localStorage.removeItem('token');
+  localStorage.removeItem('userId');
+  localStorage.removeItem('username');
+  localStorage.removeItem('conversations');
+  
+  // Remove authorization header from API client
+  delete api.defaults.headers.common['Authorization'];
+};
+
+// -----------------------------------------------------------------------------
+// AUTH ENDPOINTS – /api/v1/auth
+// -----------------------------------------------------------------------------
+export const AuthAPI = {
+  /** POST /api/v1/auth/login */
+  login: async (data: LoginRequest): Promise<AxiosResponse<JwtResponse>> => {
+    try {
+      console.log('Sending login request to:', API_BASE + '/api/v1/auth/login');
+      const response = await api.post<JwtResponse>('/api/v1/auth/login', data);
+      return response;
+    } catch (error) {
+      console.error('Error in AuthAPI.login:', error);
+      throw error;
+    }
+  },
+};
+
 // -----------------------------------------------------------------------------
 // AUTH API
 // -----------------------------------------------------------------------------

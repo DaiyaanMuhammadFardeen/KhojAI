@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Development Timeline Calendar</title>
+        <style>
+* {
+    margin: 0;
+    padding:0;
+    box-sizing: border-box;
+}
+
+        :root {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: white;
+            --bg-tertiary: #f8f9fa;
+            --text-primary: #2c3e50;
+            --text-secondary: #636e72;
+            --text-tertiary: #95a5a6;
+            --border-color: #e1e8ed;
+            --hover-border: #0984e3;
+            --shadow: rgba(0,0,0,0.08);
+            --cell-bg: #fafbfc;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --text-primary: #eaeaea;
+            --text-secondary: #b8b8b8;
+            --text-tertiary: #8a8a8a;
+            --border-color: #2d3e50;
+            --hover-border: #3498db;
+            --shadow: rgba(0,0,0,0.3);
+            --cell-bg: #1e2a38;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            min-height:100vh;
+            padding: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom:30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            color: var(--text-secondary);
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .developer-selector {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .theme-toggle {
+            padding: 12px 24px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-primary);
+            font-size: 1em;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--hover-border);
+        }
+
+        .dev-btn {
+            padding: 12px 30px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1em;
+            color: var(--text-primary);
+        }
+
+        .dev-btn:hover {
+            border-color: #74b9ff;
+        }
+
+        .dev-btn.active {
+            background: #0984e3;
+            color: white;
+            border-color: #0984e3;
+        }
+
+        .dev-daiyaan.active { background: #6c5ce7; border-color: #6c5ce7; }
+        .dev-fardin.active { background: #00b894; border-color: #00b894; }
+        .dev-rafiul.active { background: #fd79a8; border-color: #fd79a8; }
+
+        .calendar-wrapper {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+
+        .current-dev-info {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        .current-dev-info h2 {
+            color: var(--text-primary);
+            font-size: 1.5em;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .month-header {
+            grid-column: 1 / -1;
+            text-align: center;
+            font-size: 1.6em;
+            font-weight: 700;
+            color: var(--text-primary);
+            padding: 20px 0 10px 0;
+            margin-top: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .day-header {
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            padding: 10px;
+            font-size: 0.85em;
+        }
+
+        .day-cell {
+            min-height: 100px;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--cell-bg);
+            border: 2px solid var(--border-color);
+        }
+
+        .day-cell:hover {
+            border-color: var(--hover-border);
+            box-shadow: 0 2px 8px rgba(9, 132, 227, 0.15);
+        }
+
+        .day-cell.has-task {
+            background: var(--bg-secondary);
+        }
+
+        .day-cell.completed {
+            background: #d5f4e6;
+            border-color: #00b894;
+        }
+
+        [data-theme="dark"] .day-cell.completed {
+            background: #1a4d3a;
+            border-color: #00b894;
+        }
+
+        .day-cell.in-progress {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+        }
+
+        [data-theme="dark"] .day-cell.in-progress {
+            background: #4a3c1a;
+            border-color: #ffeaa7;
+        }
+
+        .day-cell.pending {
+            background: #ffe5e5;
+            border-color: #ff7675;
+        }
+
+        [data-theme="dark"] .day-cell.pending {
+            background: #4a1a1a;
+            border-color: #ff7675;
+        }
+
+        .day-number {
+            font-weight: 700;
+            font-size: 1.1em;
+            color: var(--text-primary);
+            margin-bottom: 5px;
+        }
+
+        .day-label {
+            font-size: 0.7em;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            margin-bottom: 5px;
+        }
+
+        .task-preview {
+            font-size: 0.75em;
+            color: var(--text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            margin-top: 5px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height:8px;
+            border-radius: 50%;
+            margin-left: 5px;
+        }
+
+        .status-indicator.completed { background: #00b894; }
+        .status-indicator.in-progress { background: #fdcb6e; }
+        .status-indicator.pending { background: #ff7675; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .modal-header h2 {
+            color: var(--text-primary);
+            font-size: 1.6em;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.8em;
+            cursor: pointer;
+            color: var(--text-tertiary);
+            transition: color 0.2s;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+
+        .close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95em;
+            transition: border-color 0.2s;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--hover-border);
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .status-select {
+            padding: 12px;
+            font-size: 0.95em;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .save-btn, .delete-btn {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95em;
+        }
+
+        .save-btn {
+            background: #0984e3;
+            color: white;
+        }
+
+        .save-btn:hover {
+            background: #0770c4;
+        }
+
+        .delete-btn {
+            background: var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .delete-btn:hover {
+            background: #ff7675;
+            color: white;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius:4px;
+        }
+
+        .legend-color.completed { background: #00b894; }
+        .legend-color.in-progress { background: #fdcb6e; }
+        .legend-color.pending { background: #ff7675; }
+
+        .phase-info {
+            background: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        .phase-info strong {
+            color: var(--text-primary);
+        }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>ChudlingPong News 💦💦</h1>
+                <p>Fact-Checking System | Nov 2025 - Jan 2026</p>
+            </div>
+
+            <div class="controls-row">
+                <div class="developer-selector">
+                    <button class="dev-btn dev-daiyaan active" onclick="selectDeveloper('daiyaan')">Daiyaan</button>
+                    <button class="dev-btn dev-fardin" onclick="selectDeveloper('fardin')">Fardin</button>
+                    <button class="dev-btn dev-rafiul" onclick="selectDeveloper('rafiul')">Rafiul</button>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">🌓 Toggle Theme</button>
+            </div>
+
+            <div class="calendar-wrapper">
+                <div class="current-dev-info">
+                    <h2 id="currentDevName">Daiyaan's Calendar</h2>
+                </div>
+                <div class="calendar-grid" id="calendar"></div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color completed"></div>
+                        <span>Completed</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color in-progress"></div>
+                        <span>In Progress</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color pending"></div>
+                        <span>Pending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="taskModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Day Details</h2>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+
+                <div class="phase-info" id="phaseInfo"></div>
+
+                <div class="form-group">
+                    <label>Task Title</label>
+                    <input type="text" id="taskTitle" placeholder="What are you working on?">
+                </div>
+
+                <div class="form-group">
+                    <label>Planned Actions</label>
+                    <textarea id="plannedActions" placeholder="What did youplan to do today?"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Progress Notes</label>
+                    <textarea id="progressNotes" placeholder="What progress have you made?"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="taskStatus" class="status-select">
+                        <option value="">Not Started</option>
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Additional Notes</label>
+                    <textarea id="additionalNotes" placeholder="Any blockers, questions, or additional information?"></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button class="save-btn" onclick="saveTask()">Save Task</button>
+                    <button class="delete-btn" onclick="deleteTask()">Clear Task</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const developers = {
+                daiyaan: { name: 'Daiyaan', color: '#6c5ce7' },
+                fardin: { name: 'Fardin', color: '#00b894' },
+                rafiul: { name: 'Rafiul', color: '#fd79a8' }
+            };
+
+            const startDate = new Date(2025, 10, 20);
+            const endDate = new Date(2026, 0, 4);
+            let currentDeveloper = 'daiyaan';
+            let currentDay = null;
+            let developerData = {};
+
+            // AI Developer (Daiyaan) Timeline
+            const daiyaanTimeline = {
+                1: { title: 'Requirements Analysis', planned: 'Map out system components (scraper, image processor, search query builder, fact correlator, scorer). Sketch data flows using tools like Draw.io.', progress: '' },
+                2: { title: 'Research Libraries', planned:'Research libraries/APIs: BeautifulSoup, Selenium, spaCy, Hugging Face Transformers, Google Custom Search API, TinEye API, OpenAI API.', progress: '' },
+                3: { title: 'Environment Setup', planned: 'Install Python 3.10+, virtualenv. Pip install core libs:requests, beautifulsoup4, selenium, pillow, spacy, transformers. Set up API keys.', progress: '' },
+                4: { title: 'Input Handling', planned: 'Implement submission endpoint using Flask. Validate inputs and store temporarily in database.', progress: '' },
+                5: { title: 'FBScraping', planned: 'Build scraper using Selenium for dynamic content. Extract text, images, links, dates, locations. Handle errors with proxies and retries.', progress: '' },
+                6: { title: 'Platform Submissions', planned: 'Add form for direct uploads (text + image). Extract facts using spaCy NER for dates/locations.', progress: '' },
+                7: { title: 'Integration & Testing', planned: 'End-to-end ingestion test. Debug edge cases (private posts, no images).', progress: '' },
+                8: { title: 'Metadata Extraction', planned: 'Use Pillow toextract EXIF data (date, GPS, camera). Correlate with content claims.', progress: '' },
+                9: { title: 'Reverse Image Search (1)', planned: 'Implement multi-engine search: Upload image to Google, Yandex, Bing, TinEye APIs. Gather results.', progress: '' },
+                10: { title: 'Reverse Image Search (2)', planned: 'Focus on social media: Search FB/Twitter/Reddit/Instagram via keywords + image hash (perceptual hash with imagehash lib).', progress: '' },
+                11: { title: 'Image Fact Portfolio (1)', planned: 'Aggregate results into JSON structure. Use NLP to extract facts from matched pages.', progress: '' },
+                12: { title: 'Image Fact Portfolio (2)', planned: 'Build complete fact portfolio with origins, timestamps, and associated facts.', progress: '' },
+                13: {title: 'Image Testing (1)', planned: 'Test with real images. Score simple matches and evaluate accuracy.', progress: '' },
+                14: { title: 'Image Testing (2)', planned: 'Optimize caching. Handle large images efficiently.', progress: '' },
+                15: { title:'Query Builder (1)', planned: 'Generate search queries from extracted facts using advanced operators (site:, filetype:, date ranges).', progress: '' },
+                16: { title: 'Query Builder (2)', planned: 'Refine query logic and test variations for better results.', progress: '' },
+                17: { title: 'Web Searches (1)', planned: 'Implement DuckDuckGo/Google API for web searches. Gather snippets and build portfolio.', progress: '' },
+                18: { title: 'Web Searches (2)', planned: 'Integrate FB Graph API for tags/dates/locations. Continue building fact portfolio.', progress: '' },
+                19: { title: 'Text Integration (1)', planned: 'Implement branch logic: If image, use Phase 3; else use text verification.', progress: '' },
+                20: { title: 'Text Integration (2)', planned: 'Hybrid approach: If image + text, combine portfolios from both methods.', progress: '' },
+                21: { title: 'Text Testing', planned: 'End-to-end testing for text-only verification pipeline.', progress: '' },
+                22: { title: 'Link Scraper (1)', planned:'Scrape linked pages and extract text content.', progress: '' },
+                23: { title: 'Link Scraper (2)', planned: 'Compare with claims using string similarity (difflib). Check domain credibility against fake news lists.', progress: '' },
+                24: { title: 'PortfolioBuilder (1)', planned: 'Merge all sources: Image + text + links into unified fact set. Use AI embeddings with Transformers.', progress: '' },
+                25: { title: 'Portfolio Builder (2)', planned: 'Compute similarities between facts. Consolidate and structure final portfolio.', progress: '' },
+                26: { title: 'Correlation Logic (1)', planned: 'Match original content vs. portfolio. Flag matches and mismatches.', progress: '' },
+                27: { title: 'Correlation Logic (2)', planned: 'Refine matching algorithm. Test accuracy with sample data.', progress:'' },
+                28: { title: 'Full Flow Testing', planned: 'Simulate complete verification flows from start to finish.', progress: '' },
+                29: { title: 'Scoring Algorithm (1)', planned: 'Define weighted score: 40% fact match, 30%source credibility, 20% date/location, 10% metadata.', progress: '' },
+                30: { title: 'Scoring Algorithm (2)', planned: 'Calculate likelihood (0-100%). Set thresholds (e.g., >80% = likely true).', progress: ''},
+                31: { title: 'Report Generator (1)', planned: 'Create HTML/JSON output with breakdown sections (matches, mismatches, sources, score).', progress: '' },
+                32: { title: 'Report Generator (2)', planned: 'Use LLM for AI summary tonarrate findings (e.g., "This claim matches X source but date mismatches").', progress: '' },
+                33: { title: 'Full Integration (1)', planned: 'Hook everything into Flask. Process queue and generate reports automatically.', progress: '' },
+                34: { title: 'Full Integration (2)', planned: 'End-to-end testing of complete integrated system.', progress: '' },
+                35: { title: 'UI Polish', planned: 'Build simple dashboard for viewing reports. Improve user experience.', progress: '' },
+                36: { title: 'Testing (1)', planned: 'Unit tests with pytest. End-to-end tests with sample data.', progress: '' },
+                37: { title: 'Testing (2)', planned: 'Bias check: Test with diverse Bangladesh topics to ensure fairness.', progress: '' },
+                38: { title: 'Testing (3)', planned: 'Performance testing and bug fixes.', progress: '' },
+                39: { title: 'Deployment (1)', planned: 'Host on Heroku/AWS. Set up server and configure deployment.', progress: '' },
+                40: { title: 'Deployment (2)', planned: 'Configure database andimplement security measures (API keys in env, HTTPS).', progress: '' },
+                41: { title: 'Iteration (1)', planned: 'Gather user feedback and fix reported bugs.', progress: '' },
+                42: { title: 'Iteration (2)', planned: 'Plan future features (video support, user accounts). Write documentation.', progress: '' },
+                43: { title: 'Buffer Day', planned: 'Catch up on any pending tasks or start advanced features.', progress: '' },
+                44: { title: 'Buffer Day', planned: 'Final optimizations and refinements.', progress: '' },
+                45: { title: 'Buffer Day', planned: 'Additional testing and quality assurance.', progress: '' },
+                46: { title: 'Buffer Day', planned: 'Documentation and knowledge transfer.', progress: '' }
+            };
+
+            // Backend Developer (Fardin) Timeline
+            const fardinTimeline = {
+                1: { title: 'Requirements & Architecture', planned: 'Review project specs. Design ER diagram with Journalist and Article entities. Plan REST APIs. Set up Swagger.', progress: '' },
+                2: { title: 'Project Setup', planned: 'Use Spring Initializr. Configure application.yml. Create base entities with @Entity. Set up global exception handling.', progress: '' },
+                3: { title: 'Auth Skeleton & DB', planned: 'Implement BCryptPasswordEncoder. Create AuthService for signup/login. Set up JWT with io.jsonwebtoken. Initialize DB with Flyway.', progress:'' },
+                4: { title: 'Signup & Login', planned: 'Create AuthController with POST /api/auth/signup and /api/auth/login. Return JWT on success. Write unit tests.', progress: '' },
+                5: { title: 'JWT Middleware', planned: 'Add JwtAuthenticationFilter. ParseJWT and set SecurityContext. Secure routes with @PreAuthorize.', progress: '' },
+                6: { title: 'Verification Logic', planned: 'Add JournalistService to calculate avgScore. Create cron job to auto-verify journalists. Implement manual verification endpoint.', progress: '' },
+                7: { title:'Admin Features', planned: 'Create AdminController with GET /api/admin/journalists. Implement pagination. Secure admin routes.', progress: '' },
+                8: { title: 'Auth Testing', planned: 'Integration tests with @SpringBootTest. Debug verification logic. Ensure no data leaks.', progress: '' },
+                9: { title: 'Article Submission', planned: 'Create ArticleController with POST /api/articles/submit. Validate with @Valid ArticleDto. Save entity with journalistUuid.', progress: '' },
+                10: { title: 'AI Integration', planned: 'Create @Async method to call AI fact-checker. Update article with score/breakdown. Auto-publish if verified and score > threshold.', progress: '' },
+                11: { title: 'Image & Categories', planned: 'Integrate AWS S3 for image uploads. Implement category as @Enumerated(EnumType.STRING).', progress: '' },
+                12: { title: 'Review Endpoints', planned: 'Implement GET /api/articles/my-submissions. Create admin POST /api/articles/{id}/publish endpoint.', progress: '' },
+                13: { title: 'Verified Signature', planned: 'Include isVerified from journalist in Article fetch. Parse URLsfor source credibility checking.', progress: '' },
+                14: { title: 'Credibility Checks', planned: 'Implement source verifier with Jsoup. Check domain credibility via custom list or API.', progress: '' },
+                15: { title: 'AI Testing', planned: 'Mock AI calls andtest thresholds. Ensure proper error handling.', progress: '' },
+                16: { title: 'Category Endpoints', planned: 'Implement GET /api/categories. Create GET /api/articles with category filtering and pagination.', progress: '' },
+                17: { title: 'Article Detail & Search', planned:'Implement GET /api/articles/{id} with atomic viewCount increment. Add GET /api/articles/search with @Query.', progress: '' },
+                18: { title: 'Caching Setup', planned: 'Add @Cacheable for frequent queries. Integrate Redis for caching.', progress: '' },
+                19: { title: 'API Optimization', planned: 'Optimize database queries. Add proper indexing.', progress: '' },
+                20: { title: 'Load Testing (1)', planned: 'Conduct load tests with JMeter. Identify bottlenecks.', progress: '' },
+                21:{ title: 'Load Testing (2)', planned: 'Fix performance issues. Optimize slow endpoints.', progress: '' },
+                22: { title: 'Polish APIs', planned: 'Review all endpoints. Improve error messages and validation.', progress: '' },
+                23: { title: 'Recommendation Logic', planned: 'Create RecommendationService. Query top articles by viewCount + factScore * weight.', progress: '' },
+                24: { title: 'Recommendation API', planned: 'Implement GET /api/recommendations. Test with sample data.', progress: '' },
+                25: {title: 'Personalization', planned: 'Add session-based preferences if applicable. Otherwise implement global recommendations.', progress: '' },
+                26: { title: 'Analytics Setup', planned: 'Recalculate journalist scores periodically. Track important metrics.', progress: '' },
+                27: { title: 'Analytics Endpoints', planned: 'Create endpoints for viewing analytics. Implement proper authorization.', progress: '' },
+                28: { title: 'Recommendation Testing', planned: 'Test recommendation algorithm with various scenarios.', progress: '' },
+                29: { title: 'Recommendation Tuning', planned: 'Fine-tune weights and parameters for better recommendations.', progress: '' },
+                30: { title: 'Security Hardening (1)', planned: 'Implement RateLimiter. Conduct OWASP security checks.', progress: '' },
+                31: { title: 'Security Hardening (2)', planned: 'Fix securityvulnerabilities. Add input sanitization.', progress: '' },
+                32: { title: 'Security Testing', planned: 'Penetration testing. Ensure all endpoints are properly secured.', progress: '' },
+                33: { title: 'DB Optimization (1)', planned: 'Add database indexing for frequently queried fields.', progress: '' },
+                34: { title: 'DB Optimization (2)', planned: 'Optimize complex queries. Implement connection pooling.', progress: '' },
+                35: { title: 'Performance Tuning', planned: 'Profile application. Optimize memory usage and response times.', progress: ''},
+                36: { title: 'E2E Testing (1)', planned: 'End-to-end integration testing of all workflows.', progress: '' },
+                37: { title: 'E2E Testing (2)', planned: 'Test edge cases and error scenarios.', progress: '' },
+                38: { title: 'E2E Testing (3)', planned: 'Final testing round and bug fixes.', progress: '' },
+                39: { title: 'Docker Setup', planned: 'Create Dockerfile and docker-compose.yml. Test containerized deployment.', progress: '' },
+                40: { title: 'AWS Deployment', planned: 'Deploy to AWS (EC2/ECS). Set up RDS for database. Configure security groups.', progress: '' },
+                41: { title: 'Production Setup', planned: 'Configure production environment. Set up monitoring and logging.', progress: '' },
+                42: { title: 'Final Iteration', planned: 'Monitor production. Fix any deployment issues. Gather feedback.', progress: '' },
+                43: { title: 'Buffer Day', planned: 'Address any remaining backend tasks.', progress: '' },
+                44: { title: 'BufferDay', planned: 'Performance monitoring and optimization.', progress: '' },
+                45: { title: 'Buffer Day', planned: 'Additional security hardening.', progress: '' },
+                46: { title: 'Buffer Day', planned: 'Documentation and API versioning.', progress: '' }
+            };
+
+            // Frontend Developer (Rafiul) Timeline
+            const rafiulTimeline = {
+                1: { title: 'Wireframing & Design', planned: 'Review requirements. Create wireframes in Figma/Sketch: homepage, login form, submission form, article detail. Focus on mobile-firstdesign.', progress: '' },
+                2: { title: 'Project Setup', planned: 'Run npx create-next-app@latest --ts. Add Tailwind CSS. Install dependencies: axios, react-hook-form, zod, jwt-decode, @tanstack/react-query.', progress: '' },
+                3: { title: 'Layout & Auth State', planned: 'Set up app/layout.tsx with Navbar and Footer. Create AuthContext for global auth state. Store token in localStorage.', progress: '' },
+                4: { title: 'Signup/Login Forms', planned: 'Create pages/auth/signup.tsx and login.tsx. Use React Hook Form + Zod validation (password min 8 chars). Submit to backend API.', progress: '' },
+                5: { title: 'Dashboard Page', planned: 'Create pages/dashboard.tsx. Fetch and display UUID/status from token. Show verification status with conditional badge.', progress: '' },
+                6: { title: 'Verification Display', planned: 'Add verified badge component. Display verification status prominently in dashboard.', progress: '' },
+                7: { title: 'Admin UI', planned: 'Create pages/admin.tsx. Build table of journalists with UUIDs. Add verify buttons with API integration.',progress: '' },
+                8: { title: 'Auth Testing', planned: 'Write Jest tests for forms and auth context. Test login/logout flows.', progress: '' },
+                9: { title: 'Submission Form', planned: 'Create pages/submit.tsx. Build form with title input, textarea content, file upload, category select. Handle multipart FormData.', progress: '' },
+                10: { title: 'Submission Status', planned: 'In dashboard: Query and list submitted articles with status/score. Add loading states.', progress: '' },
+                11: { title: 'Breakdown Rendering', planned: 'Parse fact-check JSON. Use accordion/collapsible components for breakdown sections (matches, mismatches).', progress: '' },
+                12: { title: 'Image Upload Preview', planned: 'Add image preview before submit. Validate file types and sizes.', progress: '' },
+                13: {title: 'Verified Badge', planned: 'Create reusable Badge component. Show verified status on articles and profiles.', progress: '' },
+                14: { title: 'Form Testing (1)', planned: 'Test submission form with various inputs. Mock API responses.', progress: '' },
+                15: { title: 'Form Testing (2)', planned: 'Test edge cases and error handling in forms.', progress: '' },
+                16: { title: 'Category Pages', planned: 'Create app/[category]/page.tsx with dynamic routing. Use Tanstack Query to fetch articles by category.', progress: '' },
+                17: { title: 'Article Detail Page', planned: 'Create app/articles/[id]/page.tsx. Implement SSR fetch. Render content and breakdown beautifully.', progress: '' },
+                18: { title: 'Search Bar', planned: 'Add search input in navbar. Implement onSubmit to navigate to/search with query params.', progress: '' },
+                19: { title: 'Filters & Sorting', planned: 'Add dropdown filters for categories. Implement sorting by date, score, views.', progress: '' },
+                20: { title: 'UI Polish (1)', planned: 'Improve responsivedesign. Add loading skeletons and error states.', progress: '' },
+                21: { title: 'UI Polish (2)', planned: 'Refine styling and transitions. Ensure consistent design system.', progress: '' },
+                22: { title: 'Portal Testing', planned: 'Test all public-facing pages. Ensure proper navigation and UX.', progress: '' },
+                23: { title: 'Homepage Recommendations', planned: 'Create index.tsx. Query /recommendations API. Display in carousel/grid layout.', progress: '' },
+                24: { title: 'Recommendation UI', planned: 'Build attractivecards for recommended articles. Add hover effects and animations.', progress: '' },
+                25: { title: 'Personalization UI', planned: 'If logged in, show personalized recommendations. Add filter preferences.', progress: '' },
+                26: { title: 'Homepage Hero', planned: 'Create compelling herosection. Add featured articles and call-to-actions.', progress: '' },
+                27: { title: 'Homepage Polish', planned: 'Add statistics section. Improve overall homepage layout and engagement.', progress: '' },
+                28: { title: 'Homepage Testing', planned: 'Test recommendation display. Ensure properloading and error handling.', progress: '' },
+                29: { title: 'Homepage Enhancement', planned: 'Add trending topics section. Implement infinite scroll or pagination.', progress: '' },
+                30: { title: 'Input Sanitization', planned: 'Sanitize all user inputs. Implement XSS protection. Add CSRF tokens.', progress: '' },
+                31: { title: 'Security Review', planned: 'Review all forms for security vulnerabilities. Test authentication flows.', progress: '' },
+                32: { title: 'Security Testing', planned: 'Conduct security audit. Fix any identified issues.', progress: '' },
+                33: { title: 'Image Optimization', planned: 'Implement lazy loading for images. Use Next.js Image component. Optimize asset sizes.', progress: '' },
+                34: { title: 'SSG Implementation', planned: 'Use SSG for static pages. Implement ISR forsemi-static content.', progress: '' },
+                35: { title: 'Performance Tuning', planned: 'Optimize bundle size. Implement code splitting. Improve Core Web Vitals.', progress: '' },
+                36: { title: 'Cypress Setup', planned: 'Set up Cypress for E2E testing. Write test cases for critical flows.', progress: '' },
+                37: { title: 'E2E Testing (1)', planned: 'Test auth flows, submission, and browsing with Cypress.', progress: '' },
+                38: { title: 'E2E Testing (2)', planned: 'Test edge cases and error scenarios. Ensure proper error messages.', progress: '' },
+                39: { title: 'Vercel Deployment', planned: 'Deploy to Vercel. Configure environment variables. Set up custom domain.', progress: '' },
+                40: { title: 'Production Setup', planned: 'Configure production build. Set up analytics (Google Analytics/Plausible). Implement error tracking.', progress: '' },
+                41: { title: 'Final Polish', planned: 'Address production issues. Optimize based on real user data.', progress: '' },
+                42: { title:'Iteration & Feedback', planned: 'Gather user feedback. Implement quick fixes and improvements.', progress: '' },
+                43: { title: 'Buffer Day', planned: 'Address any remaining frontend tasks. UI refinements.', progress: '' },
+                44: { title: 'Buffer Day', planned: 'Accessibilityimprovements (ARIA labels, keyboard navigation).', progress: '' },
+                45: { title: 'Buffer Day', planned: 'Additional testing and bug fixes.', progress: '' },
+                46: { title: 'Buffer Day', planned: 'Documentation and component library finalization.', progress: '' }
+            };
+
+            const phaseInfo = {
+                1: { name: 'Phase 1: Planning and Setup', days: [1, 2, 3], description: 'Requirements analysis, ethical considerations, environment setup' },
+                2: { name: 'Phase 2: Core Ingestion',days: [4, 5, 6, 7], description: 'Input handling, FB scraping, platform submissions' },
+                3: { name: 'Phase 3: Image Handling', days: [8, 9, 10, 11, 12, 13, 14], description: 'Metadata extraction, reverse search, fact portfolio' },
+                4: { name: 'Phase 4: Text Verification', days: [15, 16, 17, 18, 19, 20, 21], description:'Query builder, web searches, integration' },
+                5: { name: 'Phase 5: Source Checking', days: [22, 23, 24, 25, 26, 27, 28], description: 'Link scraper, portfolio builder, correlation' },
+                6: { name: 'Phase 6: Scoring & AI', days: [29, 30, 31, 32, 33, 34, 35], description: 'Scoring algorithm, report generator, full integration' },
+                7: { name: 'Phase 7: Testing & Deploy', days: [36, 37, 38, 39, 40, 41, 42], description: 'Testing, deployment, iteration' },
+                8: { name: 'Phase 8: Buffer Days', days: [43, 44, 45, 46], description: 'Catch-up, refinements, documentation' }
+            };
+
+            function getDefaultData(developer, day) {
+                const timelines = {
+                    daiyaan: daiyaanTimeline,
+                    fardin:fardinTimeline,
+                    rafiul: rafiulTimeline
+                };
+                return timelines[developer]&& timelines[developer][day] ? timelines[developer][day] : { title: '', planned: '', progress: '' };
+            }
+
+            function getPhaseForDay(day) {
+                for (let phase in phaseInfo) {
+                    if (phaseInfo[phase].days.includes(day)) {
+                        return { number:phase, ...phaseInfo[phase] };
+                    }
+                }
+                return null;
+            }
+
+            function loadData() {
+                const saved = localStorage.getItem('devCalendarData');
+                if (saved) {
+                    try {
+                        developerData = JSON.parse(saved);
+                    } catch (e) {
+                        developerData = {};
+                    }
+                }
+
+                // Initialize with default data if empty
+                Object.keys(developers).forEach(dev => {
+                    if (!developerData[dev]) {
+                        developerData[dev] = {};
+                    }
+                    // Populate default data for days that don't have custom data
+                    for (let day = 1; day <= 46; day++) {
+                        if (!developerData[dev][day]) {
+                            const defaultData = getDefaultData(dev, day);
+                            developerData[dev][day] = {
+                                title: defaultData.title || '',
+                                planned: defaultData.planned || '',
+                                progress: defaultData.progress|| '',
+                                status: '',
+                                notes: ''
+                            };
+                        }
+                    }
+                });
+                saveData();
+            }
+
+            function saveData() {
+                localStorage.setItem('devCalendarData', JSON.stringify(developerData));
+            }
+
+            function loadTheme() {
+                const savedTheme = localStorage.getItem('calendarTheme') || 'light';
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+
+            function toggleTheme() {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('calendarTheme', newTheme);
+            }
+
+            function selectDeveloper(dev) {
+                currentDeveloper = dev;
+
+                document.querySelectorAll('.dev-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+
+                // Fix: properly select the clicked button
+                if (event && event.target) {
+                    event.target.classList.add('active');
+                }
+
+                document.getElementById('currentDevName').textContent = `${developers[dev].name}'s Calendar`;
+
+                renderCalendar();
+            }
+
+            function renderCalendar() {
+                constcalendar = document.getElementById('calendar');
+                calendar.innerHTML = '';
+
+                let currentDate = new Date(startDate);
+                let currentMonth = -1;
+                let dayCounter = 1;
+
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+                while(currentDate <= endDate) {
+                    if (currentDate.getMonth() !== currentMonth) {
+                        currentMonth = currentDate.getMonth();
+                        const monthHeader = document.createElement('div');
+                        monthHeader.className = 'month-header';
+                        monthHeader.textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year:'numeric' });
+                        calendar.appendChild(monthHeader);
+
+                        dayNames.forEach(day => {
+                            const dayHeader = document.createElement('div');
+                            dayHeader.className = 'day-header';
+                            dayHeader.textContent = day;
+                            calendar.appendChild(dayHeader);
+                        });
+
+                        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(),1).getDay();
+                        for (let i = 0; i < firstDay; i++) {
+                            const emptyCell = document.createElement('div');
+                            calendar.appendChild(emptyCell);
+                        }
+                    }
+
+                    const dayCell = document.createElement('div');
+                    dayCell.className = 'day-cell';
+
+                    //Fix: ensure developerData exists for current developer
+                    if (!developerData[currentDeveloper]) {
+                        developerData[currentDeveloper] = {};
+                    }
+
+                    const taskData = developerData[currentDeveloper][dayCounter];
+
+                    if (taskData && taskData.title) {
+                        dayCell.classList.add('has-task');
+                        if (taskData.status) {
+                            dayCell.classList.add(taskData.status);
+                        }
+                    }
+
+                    let statusDot = '';
+                    if (taskData &&taskData.status) {
+                        statusDot = `<span class="status-indicator ${taskData.status}"></span>`;
+                    }
+
+                    dayCell.innerHTML = `
+                    <div class="day-number">${currentDate.getDate()} ${statusDot}</div>
+                    <div class="day-label">Day ${dayCounter}</div>
+                        ${(taskData && taskData.title) ? `<div class="task-preview">${taskData.title}</div>` : ''}
+                `;
+
+                    // Use a closure to capture the day value
+                    dayCell.onclick = (function(day) {
+                        return function() {
+                            openModal(day);
+                        };
+                    })(dayCounter);
+
+                    calendar.appendChild(dayCell);
+
+                    currentDate.setDate(currentDate.getDate() + 1);
+                    dayCounter++;
+                }
+            }
+
+            function openModal(day) {
+                currentDay = day;
+                const modal = document.getElementById('taskModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const phaseInfoEl =document.getElementById('phaseInfo');
+
+                const phase = getPhaseForDay(day);
+                //Fix: ensure we're using the correct developer name
+                modalTitle.textContent = `Day ${day} - ${developers[currentDeveloper].name}`;
+
+                if (phase) {
+                    phaseInfoEl.innerHTML = `<strong>${phase.name}</strong><br>${phase.description}`;
+                } else {
+                    phaseInfoEl.innerHTML ='';
+                }
+
+                // Fix: ensure developerData exists for current developer and day
+                if (!developerData[currentDeveloper]) {
+                    developerData[currentDeveloper] = {};
+                }
+
+                if (!developerData[currentDeveloper][day]) {
+                    const defaultData = getDefaultData(currentDeveloper, day);
+                    developerData[currentDeveloper][day] = {
+                        title: defaultData.title || '',
+                        planned: defaultData.planned || '',
+                        progress: defaultData.progress || '',
+                        status: '',
+                        notes: ''
+                    };
+                }
+
+                const taskData = developerData[currentDeveloper][day];
+
+                document.getElementById('taskTitle').value = taskData.title || '';
+                document.getElementById('plannedActions').value = taskData.planned || '';
+                document.getElementById('progressNotes').value = taskData.progress || '';
+                document.getElementById('taskStatus').value = taskData.status || '';
+                document.getElementById('additionalNotes').value = taskData.notes || '';
+
+                modal.style.display = 'block';
+            }
+
+            function closeModal() {
+                document.getElementById('taskModal').style.display = 'none';
+            }
+
+            function saveTask() {
+                // Fix: ensure developerData exists for current developer
+                if (!developerData[currentDeveloper]) {
+                    developerData[currentDeveloper] = {};
+                }
+
+                // Save the current day's specific data
+                developerData[currentDeveloper][currentDay] = {
+                    title: document.getElementById('taskTitle').value,
+                    planned: document.getElementById('plannedActions').value,
+                    progress: document.getElementById('progressNotes').value,
+                    status: document.getElementById('taskStatus').value,
+                    notes: document.getElementById('additionalNotes').value,
+                    lastUpdated: new Date().toISOString()
+                };
+
+                saveData();
+                renderCalendar();
+                closeModal();
+            }
+
+            function deleteTask() {
+                if (confirm('Are you sure you want to reset this task to defaults?')) {
+                    //Fix: ensure developerData exists for current developer
+                    if (!developerData[currentDeveloper]) {
+                        developerData[currentDeveloper] = {};
+                    }
+
+                    const defaultData = getDefaultData(currentDeveloper, currentDay);
+                    developerData[currentDeveloper][currentDay] = {
+                        title: defaultData.title || '',
+                        planned:defaultData.planned || '',
+                        progress: defaultData.progress || '',
+                        status: '',
+                        notes: '',
+                        lastUpdated: new Date().toISOString()
+                    };
+                    saveData();
+                    openModal(currentDay); // Reload the modal with reset data
+                    renderCalendar();
+                }
+            }
+
+            window.onclick = (event) => {
+                const modal = document.getElementById('taskModal');
+                if (event.target === modal) {
+                    closeModal();
+                }
+            };
+
+            // Initialize
+            loadTheme();
+            loadData();
+            renderCalendar();
+        </script>
+    </body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "content": "Microbial production of bacteriocins: Latest research development and applications - PMID: 30385277 - DOI: 10.1016/j.biotechadv.2018.10.007 Microbial production of bacteriocins: Latest research development and applications Abstract Bacteriocins are low molecular weight peptides secreted by the predator bacterial cells to kill sensitive cells present in the same ecosystem competing for food and other nutrients. Exceptionally few bacteriocins along with their native antibacterial property also exhibit additional anti-viral and anti-fungal properties. Bacteriocins are generally produced by Gm+, Gm- and archaea bacteria. Bacteriocins from Gm + bacteria especially from lactic acid bacteria (LAB) have been thoroughly investigated considering their great biosafety and broad industrial applications. LAB expressing bacteriocins were isolated from fermented milk and milk products, rumen of animals and soil using deferred antagonism assay. Nisin is the only bacteriocin that has got FDA approval for application as a food preservative, which is produced by Lactococcus lactis subsp. Its crystal structure explains that its antimicrobial properties are due to the binding of NH2 terminal to lipid II molecule inhibiting the peptidoglycan synthesis and carboxy terminal forming pores in bacterial cell membrane leading to cell lysis. The hinge region connecting NH2 and carboxy terminus has been mutated to generate mutant variants with higher antimicrobial activity. In a 50 ton fermentation of the mutant strain 3807 derived from L. lactis ATCC 11454, 9,960 IU/mL of nisin was produced. Currently, high purity of nisin (>99%) is very expensive and hardly commercially available. Development of more advanced tools for cost-effective separation and purification of nisin would be commercially attractive. Chemical synthesis and heterologous expression of bacteriocins ended in low yields of pure proteins. At present, bacteriocins are almost solely applied in food industries, but they have a great potential to be used in other fields such as feeds, organic fertilizers, environmental protection and personal care products. The future of bacteriocins is largely dependent on getting FDA approval for use of other bacteriocins in addition to nisin to promote the research and applications. Keywords: Antimicrobial activity; Bacteriocin; Industrial application.; L. lactis; Nisin; Production. Copyright 2018 Elsevier Inc. Publication types MeSH terms Substances LinkOut - more resources Full Text Sources Molecular Biology Databases Miscellaneous.",
+  "error": null,
+  "hashes": {
+    "content_hash": "aba0390489614c7a",
+    "url_hash": "db0f8e3825441537"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765374797.6362007,
+    "expires_at": 1765979597.6362007,
+    "fetched_at": 1765374797.6362007,
+    "last_accessed": 1765374797.6362007
+  },
+  "title": "Microbial production of bacteriocins: Latest research development and applications - PubMed",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/30385277/"
+}

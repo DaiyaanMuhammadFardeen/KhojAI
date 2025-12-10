@@ -1,0 +1,19 @@
+{
+  "content": "Posted By: HGG Advances Each month, the editors of Human Genetics and Genomics Advances interview an early-career researcher who has published work in the journal. This month we check in with Daffodil Canson () to discuss her paper Splicing annotation of endometrial cancer GWAS risk loci reveals potentially causal variants and supports a role for NF1 and SKAP1 as susceptibility genes. HGGA: What motivated you to start working on this project? DC: I have a long-standing interest in studying variant effects on gene expression and protein function and in unravelling the molecular mechanisms of disease-associated variants. As part of my PhD project, I developed the SpliceAI-10k calculator, a SpliceAI-based splicing prediction tool that facilitates identification of variants that alter splicing motifs leading to aberrant or alternative splicing. This tool performed well on the training dataset of high-risk variants in Mendelian disease genes. The next logical step was to try out the tool with other variant datasets. Candidate causal variants from the largest endometrial cancer GWAS risk meta-analysis offered a great starting point for expanding the application of the SpliceAI-10k calculator, as there was no prior splicing analysis conducted using this dataset. Integrating the splicing predictions with large-scale annotations of alternative transcript isoforms and tissue sQTLs then identified potentially causal variants that may mediate their effects on endometrial cancer risk through alternative splicing. HGGA: What about this paper/project most excites you? DC: I enjoyed the process of looking for supporting evidence for my splicing predictions, which eventually led to the creation of a splicing annotation workflow for GWAS risk variants. The most exciting part was the discovery of annotated alternative transcript isoforms and sQTL data that supported the splicing predictions. It is very rewarding to see ones tool working as intended. HGGA: What do you hope is the impact of this work for the human genetics community? DC: I hope that the splicing annotation workflow presented in our paper will also be useful in the interpretation of other GWAS datasets. The workflow can facilitate the prioritization of candidate causal variants for functional follow-up studies and aid the discovery of target genes. HGGA: What are some of the biggest challenges youve faced as a young scientist? DC: Keeping up with the latest bioinformatic tools, molecular methods, and large-scale genetic annotations is my biggest challenge; keeping my sanity in this rapidly advancing research field is a close second. As a young scientist, it is important to avoid becoming too overwhelmed with the amount of data to be handled and with the difficulty of solving research problems, especially when exploring uncharted territory. The ability to withstand frustrations and failures is essential. I am grateful to be working in a supportive and collaborative environment that helps me face these challenges. HGGA: And for fun, what is one of the most fascinating things in genetics youve learned about in the past year or so? DC: It is fascinating to see the growing role of artificial intelligence in the development of clinical variant interpretation models and the use of such models in guiding patient diagnosis and management.",
+  "error": null,
+  "hashes": {
+    "content_hash": "ef3b0a22a611e9d8",
+    "url_hash": "7dabc3a243e52158"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765214928.3510892,
+    "expires_at": 1765819728.3510892,
+    "fetched_at": 1765214928.3510892,
+    "last_accessed": 1765214928.3510892
+  },
+  "title": "Inside HGG Advances: A Chat with Daffodil Canson - ASHG",
+  "url": "https://www.ashg.org/hgga/inside-hgg-advances-with-daffodil-canson/"
+}

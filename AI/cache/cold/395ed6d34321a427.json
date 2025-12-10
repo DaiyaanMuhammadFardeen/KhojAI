@@ -1,0 +1,19 @@
+{
+  "content": "Whats Next in Quantum is quantum-centric supercomputing IBM is bringing useful quantum computing to the world. IBM offers the world's most powerful quantum computers via the cloud and powered by Qiskit, the quantum software stack built for performance. Our unrivaled research, fabrication facilities, and velocity of innovation have allowed us to advance along our roadmap toward quantum advantage in 2026 and fault tolerant quantum computing in 2029. Joining us on this journey are 250+ Fortune 500 companies, academic institutions, national labs, and startups comprising our IBM Quantum Network, all striving toward the common goal of realizing quantum advantage in their domains. Our work - Case studyRafi Letzter Scaling beyond our roadmap with networked quantum computers ExplainerJerry ChowUtility-scale dynamic circuits now available for all users ReleaseJessie Yu, Maika Takita, Kit Barton, Kevin C. Smith, Bibek Pokharel, Blake Johnson, Salvador de la Puente Gonzlez, Leanne Cherry, and Robert DavisScaling for quantum advantage and beyond NewsRyan MandelbaumBuilding quantum computers with leading-edge semiconductor fab Deep DiveRyan MandelbaumThe Coherence Times: an IBM Quantum podcast NewsRobert Davis- See more of our work on Quantum Qiskit: Open-Source Quantum Development Qiskit is an open-source SDK for working with quantum computers at the level of pulses, circuits, and application modules. Publication collections Collaborate with us IBM Quantum Network is a community of Fortune 500 companies, academic institutions, startups and national research labs working with IBM to advance quantum computing.",
+  "error": null,
+  "hashes": {
+    "content_hash": "395ed6d34321a427",
+    "url_hash": "e847ba03181bf115"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765376444.3209434,
+    "expires_at": 1765981244.3209434,
+    "fetched_at": 1765376444.3209434,
+    "last_accessed": 1765376444.3209434
+  },
+  "title": "Quantum Computing - IBM Research",
+  "url": "https://research.ibm.com/quantum-computing"
+}

@@ -1,0 +1,19 @@
+{
+  "content": "Bangladeshi crops leaf disease detection using YOLOv8 - PMID: 39309932 - PMCID: PMC11415705 - DOI: 10.1016/j.heliyon.2024.e36694 Bangladeshi crops leaf disease detection using YOLOv8 Abstract The agricultural sector in Bangladesh is a cornerstone of the nation's economy, with key crops such as rice, corn, wheat, potato, and tomato playing vital roles. However, these crops are highly vulnerable to various leaf diseases, which pose significant threats to crop yields and food security if not promptly addressed. Consequently, there is an urgent need for an automated system that can accurately identify and categorize leaf diseases, enabling early intervention and management. This study explores the efficacy of the latest state-of-the-art object detection model, YOLOv8 (You Only Look Once), in surpassing previous models for the automated detection and categorization of leaf diseases in these five major crops. By leveraging modern computer vision techniques, the goal is to enhance the efficiency of disease detection and management. A dataset comprising 19 classes, each with 150 images, totaling 2850 images, was meticulously curated and annotated for training and evaluation. The YOLOv8 framework, known for its capability to detect multiple objects simultaneously, was employed to train a deep neural network. The system's performance was evaluated using standard metrics such as mean Average Precision (mAP) and F1 score. The findings demonstrate that the YOLOv8 framework successfully identifies leaf diseases, achieving a high mAP of 98% and an F1 score of 97%. These results underscore the significant potential of this approach to enhance crop disease management, thereby improving food security and promoting agricultural sustainability in Bangladesh. Keywords: CNN; Crop leaf disease detection; Image classification; Machine learning; Object detection; Technology in agriculture; YOLOv8. Conflict of interest statement The authors declare the following financial interests/personal relationships which may be considered as potential competing interests: Dr. Jakir Hossen reports financial support was provided by 10.13039/100012024Multimedia University. Jakir Hossen reports a relationship with Multimedia University that includes: employment and funding grants. Jakir Hossen has patent pending to Patent is not applied yet. No conflict of interest If there are other authors, they declare that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper. Figures References - - Rice in Bangladesh knowledgebank-brri.org. - - Bangladesh Rice, paddy production, 1961-2023 - knoema.com knoema.com. - - Maize making its mark on farmers' lives thedailystar.net. - - Bangladesh Maize production, 1960-2020 - knoema.com knoema.com. LinkOut - more resources Full Text Sources.",
+  "error": null,
+  "hashes": {
+    "content_hash": "db806b7190a3d4b2",
+    "url_hash": "1dfc116bf7f4d665"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765364382.2083728,
+    "expires_at": 1765969182.2083728,
+    "fetched_at": 1765364382.2083728,
+    "last_accessed": 1765364382.2083728
+  },
+  "title": "Bangladeshi crops leaf disease detection using YOLOv8 - PubMed",
+  "url": "https://pubmed.ncbi.nlm.nih.gov/39309932/"
+}

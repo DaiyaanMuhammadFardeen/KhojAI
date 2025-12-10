@@ -1,0 +1,19 @@
+{
+  "content": "Click the button below to continue shopping Continue shopping Conditions of Use 1996-2025, Amazon.com, Inc.",
+  "error": null,
+  "hashes": {
+    "content_hash": "c0c951944c93a9ec",
+    "url_hash": "5eb34f0fc8d60d76"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765378293.6833234,
+    "expires_at": 1765983093.6833234,
+    "fetched_at": 1765378293.6833234,
+    "last_accessed": 1765378293.6833234
+  },
+  "title": "Amazon.com",
+  "url": "https://www.amazon.com/How-Do-You-Feel-Humanity/dp/1982199776"
+}

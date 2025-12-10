@@ -1,0 +1,19 @@
+{
+  "content": "",
+  "error": "Blocked by robots.txt",
+  "hashes": {
+    "content_hash": "ef46db3751d8e999",
+    "url_hash": "9defe68f08aba9b7"
+  },
+  "method": "",
+  "success": false,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765040381.5040348,
+    "expires_at": 1765043981.5040348,
+    "fetched_at": 1765040381.5040348,
+    "last_accessed": 1765040381.5040348
+  },
+  "title": "",
+  "url": "https://en.wikipedia.org/wiki/Python_(programming_language)"
+}

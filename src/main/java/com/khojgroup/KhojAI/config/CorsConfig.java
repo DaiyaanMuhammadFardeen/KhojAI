@@ -15,16 +15,16 @@ public class CorsConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         
-        // Allow requests from all origins (appropriate for development with dynamic domains)
+        // Allow requests from all origins (for demo)
         config.setAllowedOriginPatterns(List.of("*"));
         
         // Allow credentials
         config.setAllowCredentials(true);
         
-        // Allow specific HTTP methods
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // Allow all HTTP methods
+        config.setAllowedMethods(List.of("*"));
         
-        // Allow specific headers
+        // Allow all headers
         config.setAllowedHeaders(List.of("*"));
         
         // Expose specific headers

@@ -1,0 +1,19 @@
+{
+  "content": "Village politics in Bangladesh has transformed significantly between 2009 and 2024. Once shaped by personal relationships and community trust, the Union Parishad has become increasingly influenced by ruling party networks. With MPs steering local decisions and party symbols introduced in elections, access to services now often depends on political links rather than rights. Citizens engage more but participate less freely, highlighting the need for renewed democratic practices at the grassroots.",
+  "error": null,
+  "hashes": {
+    "content_hash": "55be7bf3a9cb2a3d",
+    "url_hash": "4d0c1538890610f3"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765374801.7338166,
+    "expires_at": 1765979601.7338166,
+    "fetched_at": 1765374801.7338166,
+    "last_accessed": 1765374801.7338166
+  },
+  "title": "Home - BRAC Institute of Governance and Development",
+  "url": "https://bigd.bracu.ac.bd/"
+}

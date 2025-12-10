@@ -1,0 +1,19 @@
+{
+  "content": "Discover groundbreaking innovations and scholarly contributions from our distinguished faculty and researchers. Dive into projects that shape the future, address global challenges, and reflect the academic excellence of DIU. Explore the latest scholarly works, journal articles, and conference papers authored by our researchers, showcasing ongoing academic excellence and thought leadership. Towfiqul Islam Authors: Mayeen Uddin Khandaker Authors: Mayeen Uddin Khandakar Stay updated with our latest news, events and other relavent activities. Discover innovative student and faculty projects that highlight creativity, research, and real-world solutionsdemonstrating DIUs commitment to excellence, impact, and future-ready education. Our project aimed to streamline and enhance the recruitment process by developing a CV sorting system powered by Agentic AI, leveraging the capabiliti. Lead Researcher: Sihab Howlader In this project, we developed an intelligent Messenger Automation System powered by a Large Language Model (LLM) to automate communication on a Facebo. Lead Researcher: Mehrin Khandaker Priya In this project, we developed an Agentic AI system capable of performing full CRUD (Create, Read, Update, Delete) operations on an SQL database using. Lead Researcher: Sihab Howlader.",
+  "error": null,
+  "hashes": {
+    "content_hash": "ef230f02fd4cc733",
+    "url_hash": "a30f34caee36fc8a"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765214939.7912738,
+    "expires_at": 1765819739.7912738,
+    "fetched_at": 1765214939.7912738,
+    "last_accessed": 1765214939.7912738
+  },
+  "title": "DoR - Division of Research | DIU",
+  "url": "https://research.daffodilvarsity.edu.bd/"
+}

@@ -1,0 +1,19 @@
+{
+  "content": "Pascale Senellart-Mardon, CNRS research director at the Center for Nanoscience and Nanotechnology at the Universit Paris-Saclay and co-founder of photonic quantum computer start-up Quandela, talks to Nature Materials about photonic quantum technologies and the challenges and opportunities of juggling academia and industry.",
+  "error": null,
+  "hashes": {
+    "content_hash": "1dcde90e72295024",
+    "url_hash": "6f4cc4decac4ec38"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765376464.1223557,
+    "expires_at": 1765981264.1223557,
+    "fetched_at": 1765376464.1223557,
+    "last_accessed": 1765376464.1223557
+  },
+  "title": "Quantum information - Latest research and news | Nature",
+  "url": "https://www.nature.com/subjects/quantum-information"
+}

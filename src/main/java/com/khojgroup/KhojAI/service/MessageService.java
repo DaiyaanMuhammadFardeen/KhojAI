@@ -8,9 +8,12 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
+import java.time.Duration;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +41,8 @@ public class MessageService {
 
         // AUTO AI REPLY
         if ("USER".equals(role)) {
-            String aiReply = aiService.analyze(content);
+            // Only send the latest user message for analysis to avoid keyword dilution
+            String aiReply = aiService.generateResponseFromStream(content);
             Message aiMsg = new Message();
             aiMsg.setRole("AI");
             aiMsg.setContent(aiReply);

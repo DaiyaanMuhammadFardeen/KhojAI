@@ -1,0 +1,19 @@
+{
+  "content": "Our mission is to build quantum computing for otherwise unsolvable problems. Featured Verifiable quantum advantage towards real world applications Marking a key step toward real-world applications, we've published a new breakthrough algorithm on our Willow quantum processor, Quantum Echoes, which demonstrates the first-ever verifiable quantum advantage. Introducing Willow, the next generation of quantum chips Willow, Google Quantum AI's latest state-of-the-art quantum chip, is a big step towards developing a large-scale, error-corrected quantum computer. Read the blog and watch the video to about Willow and its breakthrough achievements. [[[\"Easy to understand\",\"easyToUnderstand\",\"thumb-up\"],[\"Solved my problem\",\"solvedMyProblem\",\"thumb-up\"],[\"Other\",\"otherUp\",\"thumb-up\"]],[[\"Missing the information I need\",\"missingTheInformationINeed\",\"thumb-down\"],[\"Too complicated / too many steps\",\"tooComplicatedTooManySteps\",\"thumb-down\"],[\"Out of date\",\"outOfDate\",\"thumb-down\"],[\"Samples / code issue\",\"samplesCodeIssue\",\"thumb-down\"],[\"Other\",\"otherDown\",\"thumb-down\"]],[],[],[]].",
+  "error": null,
+  "hashes": {
+    "content_hash": "aa2f61676c52531c",
+    "url_hash": "3a785c6b2bc08079"
+  },
+  "method": "trafilatura",
+  "success": true,
+  "timestamps": {
+    "access_count": 1,
+    "cached_at": 1765376444.187019,
+    "expires_at": 1765981244.187019,
+    "fetched_at": 1765376444.187019,
+    "last_accessed": 1765376444.187019
+  },
+  "title": "Google Quantum AI",
+  "url": "https://quantumai.google/"
+}

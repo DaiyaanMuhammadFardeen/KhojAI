@@ -37,6 +37,7 @@ export interface UpdateUserRequest {
   username: string;
   email: string;
   password?: string;
+
 }
 
 export interface ConversationDTO {
@@ -172,6 +173,56 @@ export const AIApi = {
       console.log("🚀 Starting Stream ...");
 
       const response = await fetch(`${API_BASE}/api/v1/ai/stream-search`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader!.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split("\n\n");
+        buffer = chunks.pop() || "";
+
+        chunks.forEach((chunk) => {
+          const event = parseSSEEvent(chunk);
+          if (!event) return;
+
+          if (event.data === "[DONE]") return onComplete?.();
+          try {
+            onEvent(JSON.parse(event.data));
+          } catch {
+            onEvent({ text: event.data });
+          }
+        });
+      }
+
+      onComplete?.();
+    } catch (e) {
+      console.error("❌ Streaming Error:", e);
+      onError?.(e);
+    }
+  },
+
+  /** NEW SSE STREAMING ENDPOINT */
+  streamAiResponse: async (
+    data: AiRequest,
+    onEvent: (event: any) => void,
+    onComplete?: () => void,
+    onError?: (error: any) => void
+  ) => {
+    try {
+      console.log("🚀 Starting Stream to new endpoint...");
+
+      const response = await fetch(`${API_BASE}/api/v1/ai/stream-ai-response`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
         body: JSON.stringify(data),

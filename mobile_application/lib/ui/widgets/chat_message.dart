@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 class ChatMessage extends StatefulWidget {
   final String text;
@@ -28,7 +29,7 @@ class _ChatMessageState extends State<ChatMessage>
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds:300),
       vsync: this,
     );
     if (widget.isStreaming) {
@@ -39,7 +40,7 @@ class _ChatMessageState extends State<ChatMessage>
   @override
   void didUpdateWidget(covariant ChatMessage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If streaming state changed, start or reverse the animation accordingly
+    // If streaming state changed, startor reverse the animation accordingly
     if (!oldWidget.isStreaming && widget.isStreaming) {
       _animationController.forward();
     } else if (oldWidget.isStreaming && !widget.isStreaming) {
@@ -61,7 +62,7 @@ class _ChatMessageState extends State<ChatMessage>
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() {
-          _showCopyFeedback = false;
+         _showCopyFeedback = false;
         });
       }
     });
@@ -74,9 +75,9 @@ class _ChatMessageState extends State<ChatMessage>
 
     switch (widget.messageType) {
       case 'intent':
-        return Colors.blue.withOpacity(0.1);
+        return Colors.blue.withValues(alpha: 0.1);
       case 'search':
-        return Colors.green.withOpacity(0.1);
+        return Colors.green.withValues(alpha: 0.1);
       case 'response':
         return Theme.of(context).colorScheme.surfaceContainerHighest;
       default:
@@ -112,136 +113,201 @@ class _ChatMessageState extends State<ChatMessage>
     }
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     try {
-      return Align(
-        alignment: widget.isUser ? Alignment.centerRight : Alignment.centerLeft,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Flexible(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: _getBackgroundColor(context),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Message label
-                      if (!widget.isUser && widget.messageType != 'response')
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+      return AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: widget.isUser ? const Offset(1, 0) : const Offset(-1, 0),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          );
+        },
+        child: Align(
+          key: ValueKey<String>('${widget.text}_${widget.isUser}_${widget.messageType}'),
+          alignment: widget.isUser ? Alignment.centerRight : Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+Flexible(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: _getBackgroundColor(context),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Message label
+                        if (!widget.isUser && widget.messageType != 'response')
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _getTextColor(context).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              _getMessageLabel(),
+                              style: TextStyle(
+                                color: _getTextColor(context),
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                          decoration: BoxDecoration(
-                            color: _getTextColor(context).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            _getMessageLabel(),
+                        // Main text content
+                        widget.messageType =='search' || widget.messageType == 'intent' 
+                        ? Text(
+                            widget.text.isEmpty ? '[Empty message]' : widget.text,
                             style: TextStyle(
                               color: _getTextColor(context),
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
                             ),
+                          )
+                        : MarkdownBody(
+                            data: widget.text.isEmpty ? '_Emptymessage_' : widget.text,
+                            styleSheet: MarkdownStyleSheet(
+                              p: TextStyle(
+                                color: _getTextColor(context),
+                                fontSize: 14,
+                              ),
+                              strong: TextStyle(
+                                color: _getTextColor(context),
+                                fontWeight: FontWeight.bold,
+                              ),
+                              em: TextStyle(
+                                color: _getTextColor(context),
+                                fontStyle: FontStyle.italic,
+                              ),
+                              code: TextStyle(
+                                color: _getTextColor(context),
+                                fontFamily: 'monospace',
+                                fontSize: 12,
+                                backgroundColor: Theme.of(context).colorScheme.surface,
+                              ),
+                              h1: TextStyle(
+                                color: _getTextColor(context),
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              h2: TextStyle(
+                                color: _getTextColor(context),
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              h3: TextStyle(
+                                color: _getTextColor(context),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              blockquote: TextStyle(
+                                color: _getTextColor(context),
+                                fontStyle: FontStyle.italic,
+                              ),
+                              listBullet: TextStyle(
+                                color: _getTextColor(context),
+                              ),
+                            ),
+                            onTapLink: (text, href, title) {
+                              //TODO: Handle link taps
+                            },
                           ),
-                        ),
-                      // Main text content
-                      Text(
-                        widget.text.isEmpty ? '[Empty message]' : widget.text,
-                        style: TextStyle(
-                          color: _getTextColor(context),
-                          fontSize: 14,
-                        ),
-                      ),
-                      // Streaming indicator
-                      if (widget.isStreaming)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: SizedBox(
-                            height: 20,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                SizedBox(
-                                  width: 12,
-                                  height: 12,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 1.5,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      _getTextColor(context),
+// Streamingindicator
+                        if (widget.isStreaming)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: SizedBox(
+                              height: 20,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 12,
+                                    height:12,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 1.5,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        _getTextColor(context),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Streaming...',
-                                  style: TextStyle(
-                                    color: _getTextColor(context),
-                                    fontSize: 11,
-                                    fontStyle: FontStyle.italic,
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Streaming...',
+                                    style: TextStyle(
+                                      color: _getTextColor(context),
+                                      fontSize: 11,
+                                      fontStyle: FontStyle.italic,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Copy button (only for non-user messages with content)
+                if (!widget.isUser && widget.text.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              try {
+                                _copyToClipboard();
+                              } catch (e) {
+                                print(
+                                  '[ChatMessage] Error copying to clipboard: $e',
+                                );
+                              }
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Icon(
+                                _showCopyFeedback ? Icons.check : Icons.copy,
+                                size: 16,
+                                color: _showCopyFeedback
+                                    ? Colors.green
+                                    : Theme.of(context).colorScheme.outline,
+                              ),
                             ),
                           ),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ),
-              // Copy button (only for non-user messages with content)
-              if (!widget.isUser && widget.text.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            try {
-                              _copyToClipboard();
-                            } catch (e) {
-                              print(
-                                '[ChatMessage] Error copying to clipboard: $e',
-                              );
-                            }
-                          },
-                          borderRadius: BorderRadius.circular(20),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Icon(
-                              _showCopyFeedback ? Icons.check : Icons.copy,
-                              size: 16,
-                              color: _showCopyFeedback
-                                  ? Colors.green
-                                  : Theme.of(context).colorScheme.outline,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       );

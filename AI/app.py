@@ -31,6 +31,14 @@ class FlexiblePromptRequest(BaseModel):
     message: str = None
     text: str = None
 
+@app.get("/health")
+async def health_check():
+    """
+    Health check endpoint for the mobile application to verify API availability.
+    Returns a JSON object indicating the service is running.
+    """
+    return {"success": True, "statusCode": 200}
+
 @app.post("/stream")
 async def unified_stream(request: Request):
     """
@@ -76,17 +84,6 @@ async def unified_stream(request: Request):
                                  "Connection": "keep-alive",
                                  "Access-Control-Allow-Origin": "*"
                                  })
-
-@app.post("/generate-response", response_model=PromptResponse)
-async def generate_response(request: PromptRequest):
-    """
-    Generate a response using web search and LLM augmentation.
-    """
-    try:
-        response = generate_response_with_web_search(request.prompt)
-        return PromptResponse(message=response)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

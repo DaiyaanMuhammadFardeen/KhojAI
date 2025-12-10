@@ -5,6 +5,7 @@ import '../settings_service.dart';
 
 class ApiService {
   static const String streamEndpoint = '/stream';
+  static const String healthEndpoint = '/health'; // Health check endpoint
   final SettingsService _settingsService = SettingsService();
 
   /// Streams AI responses token by token from the backend
@@ -79,4 +80,25 @@ class ApiService {
       throw Exception('Fatal error: $e');
     }
   }
+  
+  /// Check if the API is reachable and healthy
+  Future<ApiHealthStatus> checkApiHealth() async {
+    try {
+      final baseUrl = _settingsService.baseUrl;
+      final url = Uri.parse('$baseUrl$healthEndpoint');
+      
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
+      return ApiHealthStatus(success: true, statusCode: response.statusCode);
+    } catch (e) {
+      return ApiHealthStatus(success: false, error: e.toString());
+    }
+  }
+}
+
+class ApiHealthStatus {
+  final bool success;
+  final int? statusCode;
+  final String? error;
+
+  ApiHealthStatus({required this.success, this.statusCode, this.error});
 }

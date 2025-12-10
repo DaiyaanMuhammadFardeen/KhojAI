@@ -26,7 +26,7 @@ _llm_response_cache = {}
 init(autoreset=True)
 
 # ———————————————————————— CONFIG ————————————————————————
-MODEL_NAME = "gemma3:270m"        # change to gemma3, llama3.2, phi4, etc.
+MODEL_NAME = "gemma3:1b"        # change to gemma3, llama3.2, phi4, etc.
 MAX_SEARCH_QUERIES = 5
 TOP_KEYWORDS = 10
 

@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import uvicorn
@@ -6,25 +7,54 @@ import json
 import asyncio
 import traceback
 from prompt_analyzer import analyze_prompt
-from ai_orchestrator import generate_response_with_web_search_stream, generate_response_with_web_search
+from ai_orchestrator import generate_response_with_web_search, generate_unified_stream
 
 app = FastAPI(title="AI Prompt Analyzer", version="1.0.0")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify exact origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"]
+)
 
 class PromptRequest(BaseModel):
     prompt: str
 
-class PromptResponse(BaseModel):
-    message: str
+# Alternative request model for more flexible handling
+class FlexiblePromptRequest(BaseModel):
+    prompt: str = None
+    query: str = None
+    message: str = None
+    text: str = None
 
-# Add a new streaming endpoint for real-time search updates
-@app.post("/stream-search")
-async def stream_search_updates(request: PromptRequest):
+@app.post("/stream")
+async def unified_stream(request: Request):
     """
-    Stream search updates in real-time as they happen.
+    Unified streaming endpoint that combines intent analysis, search, and response generation.
+    Handles various request formats for compatibility with different clients.
     """
-    print(f"Received streaming request with prompt: {request.prompt}")
     try:
-        return StreamingResponse(generate_response_with_web_search_stream(request.prompt),
+        # Try to parse the request body
+        body = await request.json()
+        
+        # Extract prompt from various possible field names
+        prompt = (body.get('prompt') or 
+                 body.get('query') or 
+                 body.get('message') or 
+                 body.get('text') or 
+                 "")
+        
+        # If we still don't have a prompt, raise an error
+        if not prompt:
+            raise HTTPException(status_code=400, detail="No prompt provided in request")
+            
+        print(f"Received unified streaming request with prompt: {prompt}")
+        
+        return StreamingResponse(generate_unified_stream(prompt),
                                  media_type="text/event-stream",
                                  headers={
                                  "Cache-Control": "no-cache",
@@ -32,8 +62,10 @@ async def stream_search_updates(request: PromptRequest):
                                  "Access-Control-Allow-Origin": "*",
                                  "X-Accel-Buffering": "no"  # Disable buffering for nginx
                                  })
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON in request body")
     except Exception as e:
-        print(f"Error in stream_search_updates: {str(e)}")
+        print(f"Error in unified_stream: {str(e)}")
         print(traceback.format_exc())
         # Even in case of error, send a proper response
         error_message = json.dumps({"type": "error", "message": "An error occurred while processing your request"})
@@ -45,39 +77,5 @@ async def stream_search_updates(request: PromptRequest):
                                  "Access-Control-Allow-Origin": "*"
                                  })
 
-@app.post("/analyze")
-async def analyze(request: PromptRequest):
-    try:
-        result = analyze_prompt(request.prompt, debug=False)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/generate-response", response_model=PromptResponse)
-async def generate_response(request: PromptRequest):
-    """
-    Generate a response using web search and LLM augmentation.
-    """
-    try:
-        # Handle case where prompt might be empty or malformed
-        if not request.prompt or not request.prompt.strip():
-            return PromptResponse(message="I didn't receive any input. Could you please provide a question or message?")
-
-        response = generate_response_with_web_search(request.prompt)
-        # Handle case where response might be None or empty
-        if not response or not response.strip():
-            return PromptResponse(message="I couldn't generate a response to that. Could you try rephrasing?")
-
-        return PromptResponse(message=response)
-    except IndexError as e:
-        # Specifically handle index errors
-        print(f"Index error in AI processing: {e}")
-        return PromptResponse(message="I encountered an issue processing your request. Could you try rephrasing it?")
-    except Exception as e:
-        print(f"Error in generate_response: {e}")
-        print(traceback.format_exc())
-        # Return a user-friendly error message instead of raising HTTPException
-        return PromptResponse(message="I encountered an unexpected error while processing your request. Please try again.")
-
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
